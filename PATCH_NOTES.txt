@@ -1,0 +1,21 @@
+NIFTY V5 - LEARNED CHART PATTERN OUTCOMES
+
+Implemented:
+1. Chart patterns remain causal: only current/past candles are used.
+2. V5 now trains a separate multiclass XGBoost pattern-direction model on rows where a real pattern is detected.
+3. Pattern model target is the FUTURE next-5-minute direction: DOWN / NEUTRAL / UP.
+4. Pattern-specific hit rates are calculated from the TRAIN period only.
+5. Live prediction blends the primary direction model with the learned pattern model.
+6. The old hard-coded bullish/bearish pattern confirmation list is removed from signal generation.
+7. Live response exposes pattern learning details: direction, probabilities, confidence, train sample count, historical hit rate and model weight.
+8. Dashboard shows Pattern ML Confidence, Pattern Learned Direction and Pattern History Hit Rate.
+
+New model files created after training:
+models/nifty_v5_pattern_direction.pkl
+models/nifty_v5_pattern_stats.json
+
+IMPORTANT:
+After replacing these files, DELETE/replace old V5 model artifacts if necessary and TRAIN MODEL again.
+Do not reuse an old feature_columns.json/model set with the new training code.
+
+No real orders are placed. Signals remain paper-trading/research only.

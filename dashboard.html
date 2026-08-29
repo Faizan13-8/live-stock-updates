@@ -1,0 +1,527 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NIFTY 50 AI Trading System V5</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.chart-pred-note{margin:4px 0 7px;font-size:11px;color:#667085}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="logo">∿</div><div><b>NIFTY 50 AI TRADING SYSTEM</b><span>ML + Pattern Recognition + Signal Engine</span></div></div>
+  <div class="market"><span class="dot"></span><div><b id="marketStatus">MARKET STATUS</b><small id="marketSub">Checking...</small></div></div>
+  <div class="top-actions"><button class="ghost" id="modelTab">Model Status</button><button class="ghost" id="dataTab">Data Check</button><span id="tokenBadge" class="badge">Token not saved</span></div>
+</header>
+
+<main class="wrap">
+<section class="control card">
+  <div class="section-head"><div><h2>Upstox Connection & Model Control</h2><p>Token is kept server-side in memory. It is never returned to the browser.</p></div></div>
+  <div class="token-row">
+    <input id="token" type="password" placeholder="Paste Upstox Analytics Token" autocomplete="off">
+    <button id="testBtn" class="primary">Test & Save Token</button>
+    <button id="clearTokenBtn" class="danger ghost">Clear Token</button>
+  </div>
+  <div class="buttons">
+    <button id="downloadBtn">Download 3 Years</button>
+    <button id="checkBtn">Check Data</button>
+    <button id="trainBtn">Train Model</button>
+    <button id="predictBtn" class="primary">Predict Now</button>
+    <button id="refreshChartBtn">Refresh Chart</button>
+  </div>
+  <div id="status" class="status">Ready</div>
+  <div class="progress-wrap"><div id="bar"></div></div>
+  <div class="mini-grid">
+    <div><span>Progress</span><b id="progress">0%</b></div>
+    <div><span>Chunks</span><b id="chunks">0 / 0</b></div>
+    <div><span>Saved Candles</span><b id="saved">0</b></div>
+    <div><span>Last Update</span><b id="lastUpdate">-</b></div>
+  </div>
+</section>
+
+<section class="metric-grid">
+  <div class="metric"><span>Current NIFTY</span><strong id="currentPrice">-</strong><small id="priceDelta">-</small></div>
+  <div class="metric"><span>Latest Candle (5m)</span><strong id="candleTime">-</strong><small id="ohlc">O - H - L - C -</small></div>
+  <div class="metric"><span>5M Direction</span><strong id="dir5">-</strong><small id="conf5">Confidence -</small></div>
+  <div class="metric"><span>5M Expected Move</span><strong id="points5">-</strong><small id="price5">Expected price -</small></div>
+  <div class="metric"><span>10M Direction</span><strong id="dir10">-</strong><small id="price10">Expected price -</small></div>
+  <div class="metric"><span>Signal</span><strong id="signalTop">WAIT</strong><small id="scoreTop">Score -</small></div>
+</section>
+
+<section class="main-grid">
+  <div class="card live-card">
+    <div class="section-head"><div><h2>Live Prediction</h2><p id="predictStatus">Waiting for prediction...</p></div><div id="modelVersion" class="badge">MODEL -</div></div>
+    <div id="signal" class="big-signal wait">WAIT</div>
+    <div class="prediction-grid">
+      <div><span>5M Points</span><b id="points5b">-</b></div><div><span>5M Expected Price</span><b id="price5b">-</b></div><div><span>5M Confidence</span><b id="conf5b">-</b></div>
+      <div><span>10M Points</span><b id="points10b">-</b></div><div><span>10M Expected Price</span><b id="price10b">-</b></div><div><span>Trading Bias</span><b id="bias">-</b></div>
+    </div>
+  </div>
+
+  <aside class="card engine">
+    <div class="section-head"><div><h2>Signal Engine Details</h2><p>Confirmation layer</p></div></div>
+    <div class="engine-grid">
+      <div><span>Pattern Detected</span><b id="pattern">-</b></div><div><span>Pattern ML Confidence</span><b id="patternConf">-</b></div>
+      <div><span>Pattern Learned Direction</span><b id="patternDir">-</b></div><div><span>Pattern History Hit Rate</span><b id="patternHit">-</b></div>
+      <div><span>Trend</span><b id="trend">-</b></div><div><span>RSI (14)</span><b id="rsi">-</b></div>
+      <div><span>VWAP</span><b id="vwap">-</b></div><div><span>Support</span><b id="support">-</b></div>
+      <div><span>Resistance</span><b id="resistance">-</b></div><div><span>Signal Score</span><b id="score">-</b></div>
+    </div>
+    <div class="pressure"><div><span>Buyers <b id="buyers">-</b></span><span>Sellers <b id="sellers">-</b></span></div><div class="pressurebar"><i id="buybar"></i></div><small>OHLCV pressure proxy — not order-book data</small></div>
+  </aside>
+</section>
+
+<section class="card levels">
+  <div class="section-head"><div><h2>Trade Levels</h2><p>Calculated from signal direction, ATR and recent support/resistance. Paper trading only.</p></div></div>
+  <div class="levels-grid">
+    <div class="level entry"><span>ENTRY</span><b id="entry">-</b></div>
+    <div class="level stop"><span>STOP LOSS</span><b id="stop">-</b></div>
+    <div class="level target"><span>TARGET 1</span><b id="target1">-</b></div>
+    <div class="level target"><span>TARGET 2</span><b id="target2">-</b></div>
+    <div class="level rr"><span>RISK / REWARD</span><b id="rr">-</b></div>
+  </div>
+</section>
+
+<section class="card chart-card">
+  <div class="section-head">
+    <div><h2>NIFTY 50 Trading Chart</h2><p>Real SQLite 5-minute candles • Blue = next 5M ML prediction • BUY/SELL markers • Entry / SL / Targets • volume</p></div>
+    <div class="range"><button class="rangeBtn active" data-range="1D">1D</button><button class="rangeBtn" data-range="5D">5D</button><button class="rangeBtn" data-range="1M">1M</button><button class="rangeBtn" data-range="3M">3M</button><button id="fitBtn">Fit</button></div>
+  </div>
+  <div class="chart-wrap"><canvas id="chart"></canvas><div id="chartMsg" class="chart-msg">Loading chart...</div></div>
+  <div id="predictionCount" class="chart-pred-note">Historical ML predictions: loading...</div>
+   <div class="legend">
+    <span><i class="candle"></i> Actual candles</span><span><i class="pred"></i> ML prediction trend</span><span><i class="buy"></i> BUY</span><span><i class="sell"></i> SELL</span><span><i class="entry"></i> Entry</span><span><i class="sl"></i> Stop</span><span><i class="target"></i> Target</span>
+  </div>
+</section>
+
+<section class="bottom-grid">
+  <div class="card"><h2>Model Performance</h2><div id="modelStatus" class="quality">Loading...</div><div class="table-like"><div><span>5M MAE</span><b id="mae5">-</b></div><div><span>5M RMSE</span><b id="rmse5">-</b></div><div><span>5M R²</span><b id="r25">-</b></div><div><span>Direction Accuracy</span><b id="dirAcc">-</b></div></div></div>
+  <div class="card"><h2>Training Dataset</h2><div class="table-like"><div><span>Total Rows</span><b id="rowsTotal">-</b></div><div><span>Rows Used</span><b id="rowsUsed">-</b></div><div><span>Features</span><b id="features">-</b></div><div><span>Train / Val / Test</span><b id="split">-</b></div></div></div>
+  <div class="card"><h2>Database & System</h2><div class="table-like"><div><span>Database Rows</span><b id="dbCount">-</b></div><div><span>Database Last</span><b id="dbLast">-</b></div><div><span>API</span><b id="apiState">-</b></div><div><span>Model</span><b id="modelState">-</b></div></div></div>
+</section>
+
+<div class="footer-note">Prediction is model output, not a guaranteed market outcome. This build does not place real-money orders.</div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+let chartData = [];
+let chartRange = "1D";
+let prediction = null;
+let pan = 0, zoom = 1, dragging = false, dragX = 0;
+
+function fmt(v,d=2){return v==null||!Number.isFinite(Number(v))?"-":Number(v).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d})}
+function pct(v){return v==null||!Number.isFinite(Number(v))?"-":(Number(v)*100).toFixed(1)+"%"}
+function num(v){return v==null?"-":Number(v).toLocaleString()}
+function setStatus(t,bad=false){$("status").textContent=t;$("status").className="status "+(bad?"bad":"")}
+async function get(url){const r=await fetch(url);const d=await r.json();if(!r.ok||d.ok===false)throw new Error(d.message||"Request failed");return d}
+async function post(url,body={}){const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const d=await r.json();if(!r.ok||d.ok===false)throw new Error(d.message||"Request failed");return d}
+
+async function tokenStatus(){
+  try{
+    const d=await get("/api/token-status?t="+Date.now());
+    $("tokenBadge").textContent=d.saved?"Token saved":"Token not saved";
+    $("tokenBadge").className="badge "+(d.saved?"good":"");
+    $("token").placeholder=d.saved?"••••••••••••  Token saved ✓":"Paste Upstox Analytics Token";
+  }catch(e){}
+}
+async function restoreSavedToken(){
+  const t=localStorage.getItem("nifty_upstox_token");
+  if(!t)return;
+  try{
+    await post("/api/save-token",{token:t});
+    $("token").value="";
+    $("token").placeholder="••••••••••••  Token saved ✓";
+  }catch(e){}
+}
+async function testApi(){
+  const t=$("token").value.trim();
+  if(!t){
+    await restoreSavedToken();
+    const saved=localStorage.getItem("nifty_upstox_token");
+    if(saved)return setStatus("✓ Saved token restored.");
+    return setStatus("Enter token first.",true);
+  }
+  try{
+    setStatus("Testing Upstox API...");
+    await post("/api/test",{token:t});
+    localStorage.setItem("nifty_upstox_token",t);
+    $("token").value="";
+    $("token").placeholder="••••••••••••  Token saved ✓";
+    setStatus("✓ Upstox connected — token saved.");
+    tokenStatus();
+  }catch(e){setStatus(e.message,true)}
+}
+async function clearToken(){
+  try{
+    await post("/api/clear-token");
+    localStorage.removeItem("nifty_upstox_token");
+    $("token").value="";
+    $("token").placeholder="Paste Upstox Analytics Token";
+    tokenStatus();
+    setStatus("Token cleared.");
+  }catch(e){setStatus(e.message,true)}
+}
+async function download(){
+  try{
+    const typed=$("token").value.trim();
+    if(typed){
+      localStorage.setItem("nifty_upstox_token",typed);
+      await post("/api/save-token",{token:typed});
+      $("token").value="";
+    }else{
+      await restoreSavedToken();
+    }
+    await post("/api/download",{});
+    setStatus("Download started...");
+  }catch(e){setStatus(e.message,true)}
+}
+async function train(){try{await post("/api/train",{});setStatus("Training started...")}catch(e){setStatus(e.message,true)}}
+async function check(){try{setStatus("Checking database...");const d=await get("/api/check-data?t="+Date.now());setStatus(d.ok?"✓ Data checks passed":"✗ Data issues found",!d.ok);await stats()}catch(e){setStatus(e.message,true)}}
+async function predict(){
+  try{
+    await restoreSavedToken();
+    $("predictStatus").textContent="Fetching latest market data and calculating signal...";
+    const d=await post("/api/predict",{});
+    prediction=d;
+    renderPrediction(d);
+    await loadChart(chartRange);
+    $("lastUpdate").textContent=new Date().toLocaleTimeString();
+  }catch(e){$("predictStatus").textContent="✗ "+e.message;setStatus(e.message,true)}
+}
+function renderPrediction(d){
+  const a=d.next_5m||{}, b=d.next_10m||{}, e=d.engine||d;
+  // V5 backend returns trade levels at the top level, while older builds
+  // may return them inside trade_levels. Support both formats.
+  const rawLevels=d.trade_levels||{};
+  const l={
+    entry: rawLevels.entry ?? d.entry,
+    stop_loss: rawLevels.stop_loss ?? d.stop_loss,
+    target1: rawLevels.target1 ?? rawLevels.target_1 ?? d.target1 ?? d.target_1,
+    target2: rawLevels.target2 ?? rawLevels.target_2 ?? d.target2 ?? d.target_2,
+    risk_reward: rawLevels.risk_reward ?? d.risk_reward
+  };
+  const pl=d.pattern_learning||{};
+  $("currentPrice").textContent=fmt(d.current_price); $("candleTime").textContent=(d.timestamp||"-").replace("T"," ");
+  $("dir5").textContent=a.direction||"-"; $("points5").textContent=(a.expected_points>=0?"+":"")+fmt(a.expected_points); $("price5").textContent="Expected "+fmt(a.expected_price);
+  $("dir10").textContent=b.direction||"-"; $("price10").textContent="Expected "+fmt(b.expected_price); $("signalTop").textContent=d.signal||"WAIT"; $("scoreTop").textContent="Score "+fmt(d.signal_score,1);
+  $("points5b").textContent=(a.expected_points>=0?"+":"")+fmt(a.expected_points); $("price5b").textContent=fmt(a.expected_price); $("conf5b").textContent=pct(a.confidence);
+  $("points10b").textContent=(b.expected_points>=0?"+":"")+fmt(b.expected_points); $("price10b").textContent=fmt(b.expected_price); $("bias").textContent=d.signal||"WAIT";
+  $("conf5").textContent="Confidence "+pct(a.confidence); $("modelVersion").textContent="MODEL "+(d.model_version||"-");
+  $("signal").textContent=d.signal||"WAIT"; $("signal").className="big-signal "+String(d.signal||"WAIT").toLowerCase();
+  $("signalTop").className=d.signal==="BUY"?"up":d.signal==="SELL"?"down":"";
+  $("pattern").textContent=d.pattern||e.pattern||"-";
+  $("patternConf").textContent=pl.confidence==null?"-":pct(pl.confidence);
+  $("patternDir").textContent=pl.direction||"-";
+  $("patternHit").textContent=pl.historical_hit_rate==null?"-":pct(pl.historical_hit_rate);
+  $("trend").textContent=d.trend||e.trend||"-";
+  $("rsi").textContent=fmt(d.rsi??e.rsi); $("vwap").textContent=fmt(d.vwap??e.vwap); $("support").textContent=fmt(d.support??e.support); $("resistance").textContent=fmt(d.resistance??e.resistance); $("score").textContent=fmt(d.signal_score,1);
+  $("buyers").textContent=fmt(d.buyer_pressure??e.buyers_pct,1)+"%"; $("sellers").textContent=fmt(d.seller_pressure??e.sellers_pct,1)+"%"; $("buybar").style.width=(d.buyer_pressure??e.buyers_pct??50)+"%";
+  $("entry").textContent=fmt(l.entry); $("stop").textContent=l.stop_loss==null?"-":fmt(l.stop_loss); $("target1").textContent=fmt(l.target1); $("target2").textContent=fmt(l.target2); $("rr").textContent=l.risk_reward==null?"-":"1 : "+fmt(l.risk_reward,2);
+  $("predictStatus").textContent="✓ Live prediction updated";
+}
+async function modelStatus(){
+  try{
+    const d=await get("/api/model-status?t="+Date.now());
+    if(!d.ready){$("modelStatus").textContent="MODEL NOT TRAINED";return}
+    const m=d.metadata||{}, met=m.metrics||{}, p5=met["5m"]||{}, di=met.direction||met["5m_direction_classifier"]||{};
+    $("modelStatus").textContent="✓ MODEL "+(m.model_version||"-")+" READY • Trained "+(m.trained_at||"-");
+    $("mae5").textContent=fmt(p5.MAE);$("rmse5").textContent=fmt(p5.RMSE);$("r25").textContent=fmt(p5.R2);$("dirAcc").textContent=di.Accuracy==null?"-":pct(di.Accuracy);
+    $("rowsTotal").textContent=num(m.rows_total);$("rowsUsed").textContent=num(m.rows_used);$("features").textContent=num(m.feature_count);
+    $("split").textContent=[m.train_rows,m.validation_rows,m.test_rows].map(num).join(" / ");
+    $("modelState").textContent="Loaded "+(m.model_version||"-");
+  }catch(e){$("modelStatus").textContent="Model status unavailable"}
+}
+async function stats(){try{const d=await get("/api/stats?t="+Date.now());$("dbCount").textContent=num(d.count);$("dbLast").textContent=d.last||"-"}catch(e){}}
+async function poll(){try{const d=await get("/api/status?t="+Date.now());$("progress").textContent=(d.progress||0)+"%";$("chunks").textContent=(d.chunks_done||0)+" / "+(d.chunks_total||0);$("saved").textContent=num(d.saved||0);$("bar").style.width=(d.progress||0)+"%";if(d.error)setStatus(d.error,true);else if(d.running)setStatus(d.message||"Working...")}catch(e){}}
+
+function parseChartTime(z){
+  const raw = z?.time ?? z?.timestamp ?? z?.datetime ?? z?.date;
+  if(raw == null) return null;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function validCandle(z){
+  const o=Number(z?.open),h=Number(z?.high),l=Number(z?.low),c=Number(z?.close);
+  return [o,h,l,c].every(Number.isFinite) &&
+         o>0 && h>0 && l>0 && c>0 &&
+         l<=o && o<=h && l<=c && c<=h;
+}
+
+function drawChart(){
+  const c=$("chart"), ctx=c.getContext("2d"), rect=c.getBoundingClientRect(), dpr=devicePixelRatio||1;
+  c.width=rect.width*dpr;c.height=rect.height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+
+  const W=rect.width,H=rect.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle="#070b16";ctx.fillRect(0,0,W,H);
+
+  // Ignore malformed/zero OHLC rows AND extreme price outliers.
+  // A single corrupted candle can otherwise stretch the whole NIFTY axis.
+  let cleanData=chartData.filter(validCandle);
+
+  if(!cleanData.length){
+    $("chartMsg").style.display="block";
+    $("chartMsg").textContent="No valid historical candles returned.";
+    return;
+  }
+
+  // Robust outlier filter based only on the returned candle prices.
+  const closes=cleanData.map(z=>Number(z.close)).filter(Number.isFinite).sort((a,b)=>a-b);
+  const q=(arr,p)=>arr[Math.min(arr.length-1,Math.max(0,Math.floor((arr.length-1)*p)))];
+  const q1=q(closes,0.25), q3=q(closes,0.75);
+  const iqr=Math.max(q3-q1,0.01);
+  const robustLow=q1-3*iqr;
+  const robustHigh=q3+3*iqr;
+
+  cleanData=cleanData.filter(z=>{
+    const vals=[Number(z.open),Number(z.high),Number(z.low),Number(z.close)];
+    return vals.every(v=>Number.isFinite(v)) &&
+           vals.every(v=>v>=robustLow && v<=robustHigh);
+  });
+
+  if(!cleanData.length){
+    $("chartMsg").style.display="block";
+    $("chartMsg").textContent="No usable historical candles after validation.";
+    return;
+  }
+
+  $("chartMsg").style.display="none";
+
+  const pad={l:58,r:155,t:22,b:62};
+  const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b, n=cleanData.length;
+  const visible=Math.max(25,Math.min(n,Math.round(n/zoom)));
+  const start=Math.max(0,Math.min(n-visible,Math.round(pan)));
+  const data=cleanData.slice(start,start+visible);
+
+  const highs=data.map(x=>Number(x.high)).filter(Number.isFinite);
+  const lows=data.map(x=>Number(x.low)).filter(Number.isFinite);
+  if(!highs.length||!lows.length){
+    $("chartMsg").style.display="block";
+    $("chartMsg").textContent="Invalid candle data returned.";
+    return;
+  }
+
+  let maxP=Math.max(...highs), minP=Math.min(...lows);
+
+  // Include all live prediction levels in the Y-axis.
+  // Include prediction/levels only when they are near the actual market range.
+  // This prevents an invalid target such as 20,000 from stretching a 24,000
+  // NIFTY chart and hiding all candles.
+  const marketMid=closes.length ? closes[Math.floor(closes.length/2)] : (maxP+minP)/2;
+  const marketBand=Math.max((maxP-minP), Math.abs(marketMid)*0.01, 50);
+  const levelMin=marketMid-marketBand*4;
+  const levelMax=marketMid+marketBand*4;
+
+  const levelValues=[
+    prediction?.trade_levels?.entry, prediction?.entry,
+    prediction?.trade_levels?.stop_loss, prediction?.stop_loss,
+    prediction?.trade_levels?.target1, prediction?.trade_levels?.target_1, prediction?.target1, prediction?.target_1,
+    prediction?.trade_levels?.target2, prediction?.trade_levels?.target_2, prediction?.target2, prediction?.target_2,
+    prediction?.next_5m?.expected_price
+  ];
+  levelValues.forEach(v=>{
+    v=Number(v);
+    if(Number.isFinite(v) && v>=levelMin && v<=levelMax){
+      maxP=Math.max(maxP,v);
+      minP=Math.min(minP,v);
+    }
+  });
+
+  const extra=(maxP-minP)*.08||10;
+  maxP+=extra;minP-=extra;
+
+  // Leave one extra x-slot for the NEXT predicted candle.
+  const xSlots=visible+1;
+  const y=v=>pad.t+(maxP-v)/(maxP-minP)*ch;
+  const x=i=>pad.l+(i+.5)*(cw/xSlots);
+  const nextX=pad.l+(visible+.5)*(cw/xSlots);
+
+  ctx.strokeStyle="#172033";ctx.lineWidth=1;
+  for(let i=0;i<=5;i++){
+    const yy=pad.t+i*ch/5;
+    ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(pad.l+cw,yy);ctx.stroke();
+    ctx.fillStyle="#7f8aa3";ctx.font="11px Arial";
+    const val=maxP-(maxP-minP)*i/5;
+    ctx.fillText(fmt(val,0),8,yy+4);
+  }
+
+  const step=Math.max(1,Math.floor(visible/7));
+  ctx.font="10px Arial";ctx.fillStyle="#7f8aa3";
+  for(let i=0;i<visible;i+=step){
+    const t=parseChartTime(data[i]);
+    if(t){
+      ctx.fillText(
+        t.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}),
+        x(i)-18,H-24
+      );
+    }
+  }
+
+  // Volume
+  const maxVol=Math.max(...data.map(z=>Number(z.volume)||0),1);
+  data.forEach((z,i)=>{
+    const o=Number(z.open),h=Number(z.high),l=Number(z.low),cl=Number(z.close);
+    if(![o,h,l,cl].every(Number.isFinite))return;
+    const xx=x(i), bodyTop=y(Math.max(o,cl)), bodyBot=y(Math.min(o,cl));
+    const bullish=cl>=o;
+    ctx.strokeStyle=bullish?"#20c77a":"#ef4444";
+    ctx.fillStyle=bullish?"#14b86a":"#ef4444";
+    ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(xx,y(h));ctx.lineTo(xx,y(l));ctx.stroke();
+    ctx.fillRect(xx-2.7,bodyTop,5.4,Math.max(2,bodyBot-bodyTop));
+
+    const vh=(Number(z.volume)||0)/maxVol*35;
+    ctx.globalAlpha=.35;ctx.fillRect(xx-2.7,pad.t+ch-vh,5.4,vh);ctx.globalAlpha=1;
+  });
+
+  // Historical ML prediction trend.
+  // Plot every available walk-forward prediction as a continuous line.
+  let started=false;
+  ctx.strokeStyle="#4aa3ff";
+  ctx.lineWidth=2.5;
+  ctx.setLineDash([6,4]);
+  ctx.beginPath();
+
+  data.forEach((z,i)=>{
+    const pv=Number(z.prediction);
+    if(!Number.isFinite(pv)){
+      started=false;
+      return;
+    }
+    const xx=x(i), yy=y(pv);
+    if(!started){ctx.moveTo(xx,yy);started=true;}
+    else{ctx.lineTo(xx,yy);}
+  });
+
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Small confidence/direction dots for historical predictions.
+  data.forEach((z,i)=>{
+    const pv=Number(z.prediction);
+    if(!Number.isFinite(pv))return;
+    const xx=x(i), yy=y(pv);
+    const dir=String(z.predictedDirection||"").toUpperCase();
+    ctx.fillStyle=dir==="UP"?"#22c55e":dir==="DOWN"?"#ef4444":"#f5c542";
+    ctx.beginPath();ctx.arc(xx,yy,2.5,0,Math.PI*2);ctx.fill();
+  });
+
+  // Current LIVE prediction: draw from latest actual close to NEXT predicted close.
+  if(prediction && Number.isFinite(Number(prediction.next_5m?.expected_price))){
+    const last=data[data.length-1];
+    const lastClose=Number(last.close);
+    const predicted=Number(prediction.next_5m.expected_price);
+
+    if(Number.isFinite(lastClose)&&Number.isFinite(predicted)){
+      const lastX=x(data.length-1), lastY=y(lastClose), py=y(predicted);
+
+      ctx.strokeStyle="#4aa3ff";
+      ctx.lineWidth=3;
+      ctx.setLineDash([8,5]);
+      ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(nextX,py);ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Prediction point
+      ctx.fillStyle="#4aa3ff";
+      ctx.beginPath();ctx.arc(nextX,py,6,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle="#ffffff";ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(nextX,py,6,0,Math.PI*2);ctx.stroke();
+
+      // Label
+      const dir=String(prediction.next_5m.direction||"PREDICTION").toUpperCase();
+      const pts=Number(prediction.next_5m.expected_points);
+      const label=`NEXT 5M ${dir}  ${pts>=0?"+":""}${fmt(pts,1)} pts`;
+      ctx.font="bold 11px Arial";
+      const tw=ctx.measureText(label).width;
+      let lx=nextX+10, ly=py-12;
+      if(lx+tw>W-4)lx=W-tw-4;
+      if(ly<18)ly=18;
+      ctx.fillStyle="#4aa3ff";
+      ctx.fillText(label,lx,ly);
+
+      // Next-candle time label
+      const lastTime=parseChartTime(last);
+      if(lastTime){
+        const nextTime=new Date(lastTime.getTime()+5*60*1000);
+        ctx.fillStyle="#7f8aa3";
+        ctx.font="10px Arial";
+        ctx.fillText(
+          nextTime.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}),
+          nextX-18,H-24
+        );
+      }
+
+      // Direction marker
+      const signal=String(prediction.signal||"WAIT").toUpperCase();
+      ctx.font="bold 12px Arial";
+      ctx.fillStyle=signal==="BUY"?"#20c77a":signal==="SELL"?"#ef4444":"#f5c542";
+      ctx.fillText(signal,nextX-18,py+(signal==="SELL"?25:-18));
+    }
+  }
+
+  // Trade levels.
+  if(prediction){
+    const levels=prediction.trade_levels||{};
+    drawLevel(levels.entry ?? prediction.entry,"#f5c542","ENTRY");
+    drawLevel(levels.stop_loss ?? prediction.stop_loss,"#ff4d5d","STOP LOSS");
+    drawLevel(levels.target1 ?? levels.target_1 ?? prediction.target1 ?? prediction.target_1,"#20c77a","TARGET 1");
+    drawLevel(levels.target2 ?? levels.target_2 ?? prediction.target2 ?? prediction.target_2,"#20c77a","TARGET 2");
+  }
+
+  function drawLevel(v,color,label){
+    v=Number(v);
+    if(!Number.isFinite(v)||v<minP||v>maxP||v<levelMin||v>levelMax)return;
+    const yy=y(v);
+    ctx.strokeStyle=color;ctx.setLineDash([7,5]);ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(pad.l+cw,yy);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=color;ctx.font="bold 11px Arial";
+    ctx.fillText(label+" "+fmt(v,2),pad.l+cw+8,yy+4);
+  }
+}
+async function loadChart(range="1D"){
+  chartRange=range;
+  try{
+    const [c,p]=await Promise.all([
+      get("/api/chart-history?range="+encodeURIComponent(range)+"&t="+Date.now()),
+      get("/api/chart-predictions?range="+encodeURIComponent(range)+"&t="+Date.now())
+    ]);
+
+    chartData=c.candles||[];
+
+    // IMPORTANT: merge by candle index, not ISO timestamp.
+    // This avoids timezone/format differences between SQLite and Upstox.
+    (p.predictions||[]).forEach(z=>{
+      const i=Number(z.index);
+      if(i>=0 && i<chartData.length){
+        chartData[i].prediction=Number(z.prediction);
+        chartData[i].predictedDirection=z.direction||"";
+        chartData[i].predictionConfidence=Number(z.confidence);
+        chartData[i].predictedPoints=Number(z.expected_points);
+      }
+    });
+
+    const pc=$("predictionCount"); if(pc) pc.textContent="Historical ML predictions: "+(p.count||0)+" points • current next-5M forecast shown in blue";
+    drawChart();
+  }catch(e){
+    chartData=[];
+    $("chartMsg").style.display="block";
+    $("chartMsg").textContent="Chart error: "+e.message;
+  }
+}
+function fit(){pan=0;zoom=1;drawChart()}
+$("testBtn").onclick=testApi;$("clearTokenBtn").onclick=clearToken;$("downloadBtn").onclick=download;$("trainBtn").onclick=train;$("checkBtn").onclick=check;$("predictBtn").onclick=predict;$("refreshChartBtn").onclick=()=>{drawChart();loadChart(chartRange)};$("fitBtn").onclick=fit;
+document.querySelectorAll(".rangeBtn").forEach(b=>b.onclick=()=>{document.querySelectorAll(".rangeBtn").forEach(x=>x.classList.remove("active"));b.classList.add("active");loadChart(b.dataset.range)});
+const canvas=$("chart");canvas.addEventListener("wheel",e=>{e.preventDefault();zoom=Math.max(1,Math.min(12,zoom*(e.deltaY<0?1.18:.85)));drawChart()},{passive:false});
+canvas.addEventListener("mousedown",e=>{dragging=true;dragX=e.clientX});window.addEventListener("mouseup",()=>dragging=false);window.addEventListener("mousemove",e=>{if(!dragging||!chartData.length)return;pan+=-(e.clientX-dragX)*(chartData.filter(validCandle).length/Math.max(1,canvas.clientWidth))/zoom;pan=Math.max(0,Math.min(Math.max(0,chartData.filter(validCandle).length-Math.round(chartData.filter(validCandle).length/zoom)),pan));dragX=e.clientX;drawChart()});canvas.addEventListener("dblclick",fit);
+window.addEventListener("resize",drawChart);
+setInterval(poll,1000);setInterval(modelStatus,5000);setInterval(stats,10000);setInterval(tokenStatus,5000);
+restoreSavedToken().finally(()=>{tokenStatus();modelStatus();stats();loadChart("1D");predict();});
+</script>
+</body>
+</html>

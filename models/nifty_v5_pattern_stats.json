@@ -1,0 +1,52 @@
+{
+  "DOJI": {
+    "count": 1223,
+    "hit_rate": 0.2706459525756337,
+    "implied_direction": 1
+  },
+  "HAMMER": {
+    "count": 116,
+    "hit_rate": 0.35344827586206895,
+    "implied_direction": 2
+  },
+  "SHOOTING_STAR": {
+    "count": 93,
+    "hit_rate": 0.3655913978494624,
+    "implied_direction": 0
+  },
+  "BULLISH_ENGULFING": {
+    "count": 625,
+    "hit_rate": 0.3488,
+    "implied_direction": 2
+  },
+  "BEARISH_ENGULFING": {
+    "count": 598,
+    "hit_rate": 0.32441471571906355,
+    "implied_direction": 0
+  },
+  "INSIDE_BAR": {
+    "count": 4490,
+    "hit_rate": 0.28351893095768377,
+    "implied_direction": 1
+  },
+  "BREAKOUT_UP": {
+    "count": 105,
+    "hit_rate": 0.3238095238095238,
+    "implied_direction": 2
+  },
+  "BREAKOUT_DOWN": {
+    "count": 104,
+    "hit_rate": 0.3557692307692308,
+    "implied_direction": 0
+  },
+  "HIGHER_HIGH_LOWER_LOW": {
+    "count": 15255,
+    "hit_rate": 0.3518846279908227,
+    "implied_direction": 2
+  },
+  "LOWER_HIGH_LOWER_LOW": {
+    "count": 14365,
+    "hit_rate": 0.3477897667942917,
+    "implied_direction": 0
+  }
+}

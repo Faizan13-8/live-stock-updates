@@ -1,0 +1,26 @@
+[
+  {
+    "timestamp": "2026-08-29T14:33:24",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T14:34:24",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T14:34:24",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  }
+]
