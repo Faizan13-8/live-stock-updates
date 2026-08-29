@@ -89,11 +89,13 @@ def calculate_accuracy(window=100):
     }
 
 
-def should_retrain(window=100, min_samples=25, min_accuracy=0.80, max_mape=0.50):
+def should_retrain(window=100, min_samples=5, min_accuracy=0.80, max_mape=0.50, batch_size=5):
     summary = calculate_accuracy(window=window)
-    if summary["samples"] < min_samples:
+    recent_count = summary["samples"]
+    required_samples = max(min_samples, batch_size)
+    if recent_count < required_samples:
         return False, summary
-    if summary["direction_accuracy"] < min_accuracy or summary["mape"] > max_mape:
+    if recent_count >= batch_size and (summary["direction_accuracy"] < min_accuracy or summary["mape"] > max_mape):
         return True, summary
     return False, summary
 

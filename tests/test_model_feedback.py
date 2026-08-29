@@ -37,3 +37,22 @@ def test_record_prediction_and_accuracy(tmp_path, monkeypatch):
 
     data = json.loads(feedback_path.read_text(encoding="utf-8"))
     assert len(data) == 2
+
+
+def test_should_retrain_after_five_prediction_batch(tmp_path, monkeypatch):
+    feedback_path = tmp_path / "feedback.json"
+    monkeypatch.setattr("model_feedback.FEEDBACK_PATH", feedback_path)
+
+    for i in range(5):
+        actual_dir = "DOWN" if i % 2 == 0 else "UP"
+        record_prediction(
+            predicted_direction="UP",
+            expected_points=12.5,
+            actual_points=5.0,
+            actual_direction=actual_dir,
+            model_version="V5.2",
+        )
+
+    should_train, summary = should_retrain(window=10, min_samples=5, min_accuracy=0.80, max_mape=0.50, batch_size=5)
+    assert should_train is True
+    assert summary["samples"] == 5

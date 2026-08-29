@@ -11,17 +11,12 @@
 <header class="topbar">
   <div class="brand"><div class="logo">∿</div><div><b>NIFTY 50 AI TRADING SYSTEM</b><span>ML + Pattern Recognition + Signal Engine</span></div></div>
   <div class="market"><span class="dot"></span><div><b id="marketStatus">MARKET STATUS</b><small id="marketSub">Checking...</small></div></div>
-  <div class="top-actions"><button class="ghost" id="modelTab">Model Status</button><button class="ghost" id="dataTab">Data Check</button><span id="tokenBadge" class="badge">Token not saved</span></div>
+  <div class="top-actions"><button class="ghost" id="modelTab">Model Status</button><button class="ghost" id="dataTab">Data Check</button></div>
 </header>
 
 <main class="wrap">
 <section class="control card">
-  <div class="section-head"><div><h2>Upstox Connection & Model Control</h2><p>Token is stored only on the backend server and is not kept in browser local storage.</p></div></div>
-  <div class="token-row">
-    <input id="token" type="password" placeholder="Paste Upstox Analytics Token" autocomplete="off">
-    <button id="testBtn" class="primary">Test & Save Token</button>
-    <button id="clearTokenBtn" class="danger ghost">Clear Token</button>
-  </div>
+  <div class="section-head"><div><h2>Model Control</h2><p>Live prediction, data health and chart refresh are handled by the backend system.</p></div></div>
   <div class="buttons">
     <button id="downloadBtn">Download 3 Years</button>
     <button id="checkBtn">Check Data</button>
@@ -88,17 +83,25 @@
     <div class="range"><button class="rangeBtn active" data-range="1D">1D</button><button class="rangeBtn" data-range="5D">5D</button><button class="rangeBtn" data-range="1M">1M</button><button class="rangeBtn" data-range="3M">3M</button><button id="fitBtn">Fit</button></div>
   </div>
   <div class="chart-wrap"><canvas id="chart"></canvas><div id="chartMsg" class="chart-msg">Loading chart...</div></div>
-  <div id="predictionCount" style="margin:4px 0 7px;font-size:11px;color:#667085">Historical ML predictions: loading...</div>
-  <div id="liveSignalMeta" style="margin:4px 0 7px;font-size:11px;color:#cbd5e1">Live feed: waiting for price tick...</div>
+  <div id="predictionCount" class="chart-pred-note">Historical ML predictions: loading...</div>
+  <div id="liveSignalMeta" class="chart-live-meta">Live feed: waiting for price tick...</div>
   <div class="legend">
-    <span><i class="candle"></i> Actual candles</span><span><i class="pred"></i> ML prediction trend</span><span><i class="buy"></i> BUY</span><span><i class="sell"></i> SELL</span><span><i class="entry"></i> Entry</span><span><i class="sl"></i> Stop</span><span><i class="target"></i> Target</span>
+    <span><i class="candle"></i> Actual</span>
+    <span><i class="pred"></i> Forecast</span>
+    <span><i class="buy"></i> Long</span>
+    <span><i class="sell"></i> Short</span>
+    <span><i class="entry"></i> Entry</span>
+    <span><i class="sl"></i> Stop</span>
+    <span><i class="target"></i> Target</span>
+    <span><i class="support"></i> Support</span>
+    <span><i class="res"></i> Resistance</span>
   </div>
 </section>
 
 <section class="bottom-grid">
   <div class="card"><h2>Model Performance</h2><div id="modelStatus" class="quality">Loading...</div><div class="table-like"><div><span>5M MAE</span><b id="mae5">-</b></div><div><span>5M RMSE</span><b id="rmse5">-</b></div><div><span>5M R²</span><b id="r25">-</b></div><div><span>Direction Accuracy</span><b id="dirAcc">-</b></div></div></div>
   <div class="card"><h2>Training Dataset</h2><div class="table-like"><div><span>Total Rows</span><b id="rowsTotal">-</b></div><div><span>Rows Used</span><b id="rowsUsed">-</b></div><div><span>Features</span><b id="features">-</b></div><div><span>Train / Val / Test</span><b id="split">-</b></div></div></div>
-  <div class="card"><h2>Database & System</h2><div class="table-like"><div><span>Database Rows</span><b id="dbCount">-</b></div><div><span>Database Last</span><b id="dbLast">-</b></div><div><span>API</span><b id="apiState">-</b></div><div><span>Model</span><b id="modelState">-</b></div></div></div>
+  <div class="card"><h2>Database & System</h2><div class="table-like"><div><span>Database Rows</span><b id="dbCount">-</b></div><div><span>Database Last</span><b id="dbLast">-</b></div><div><span>Model</span><b id="modelState">-</b></div></div></div>
 </section>
 
 <div class="footer-note">Prediction is model output, not a guaranteed market outcome. This build does not place real-money orders.</div>
@@ -114,6 +117,7 @@ let zoom = 1;
 let pan = 0;
 let dragging = false;
 let dragX = 0;
+let dragStartPan = 0;
 
 function fmt(v, d=2){
   const n = Number(v);
@@ -242,6 +246,8 @@ function renderPrediction(d){
   const a = d.next_5m || {};
   const b = d.next_10m || {};
   const pl = d.pattern_learning || {};
+  const trade = d.trade_call || {};
+  const signalText = String(trade.bias || d.signal || "WAIT").toUpperCase();
   const marketState = String(d.market_status || "CLOSED").toUpperCase();
   updateMarketStatusLabel(marketState, d.market_subtext || (marketState === "OPEN" ? "Market is open" : "Market is closed"));
 
@@ -252,24 +258,35 @@ function renderPrediction(d){
   if($("price5")) $("price5").textContent="Expected "+fmt(a.expected_price);
   if($("dir10")) $("dir10").textContent=b.direction||"-";
   if($("price10")) $("price10").textContent="Expected "+fmt(b.expected_price);
-  if($("signalTop")) $("signalTop").textContent=d.signal||"WAIT";
-  if($("scoreTop")) $("scoreTop").textContent="Score "+fmt(d.signal_score,1);
-  if($("liveSignalMeta")) $("liveSignalMeta").textContent = "Live feed: "+(d.timestamp||"waiting")+" | model accuracy: "+(d.accuracy ? (d.accuracy.direction_accuracy*100).toFixed(1)+"%" : "-");
+  if($("signalTop")) $("signalTop").textContent=signalText;
+  if($("scoreTop")) $("scoreTop").textContent="RR "+fmt(trade.risk_reward ?? d.risk_reward ?? d.levels?.risk_reward ?? 0,2);
+  const retrainState = d.retrain_needed ? "Auto-retrain: needed" : "Auto-retrain: healthy";
+  const patternLabel = d.pattern ? ("Pattern: "+d.pattern) : "Pattern: none";
+  const setupLabel = trade.setup || (signalText === "BUY" ? "Bullish trend continuation" : signalText === "SELL" ? "Bearish trend continuation" : "Wait for confirmation");
+  const tradeMeta = [
+    setupLabel,
+    "Bias "+signalText,
+    "Entry "+fmt(trade.entry ?? d.entry),
+    "SL "+fmt(trade.stop_loss ?? d.stop_loss),
+    "T1 "+fmt(trade.target_1 ?? d.target_1),
+    "RR "+fmt(trade.risk_reward ?? d.risk_reward ?? 0,2)
+  ].join(" • ");
+  if($("liveSignalMeta")) $("liveSignalMeta").textContent = "Live feed: "+(d.timestamp||"waiting")+" | "+tradeMeta+" | "+retrainState+" | "+patternLabel;
 
   if($("points5b")) $("points5b").textContent=(Number(a.expected_points)>=0?"+":"")+fmt(a.expected_points);
   if($("price5b")) $("price5b").textContent=fmt(a.expected_price);
   if($("conf5b")) $("conf5b").textContent=pct(a.confidence);
   if($("points10b")) $("points10b").textContent=(Number(b.expected_points)>=0?"+":"")+fmt(b.expected_points);
   if($("price10b")) $("price10b").textContent=fmt(b.expected_price);
-  if($("bias")) $("bias").textContent=d.signal||"WAIT";
+  if($("bias")) $("bias").textContent=signalText;
   if($("conf5")) $("conf5").textContent="Confidence "+pct(a.confidence);
   if($("modelVersion")) $("modelVersion").textContent="MODEL "+(d.model_version||"-");
 
   if($("signal")){
-    $("signal").textContent=d.signal||"WAIT";
-    $("signal").className="big-signal "+String(d.signal||"WAIT").toLowerCase();
+    $("signal").textContent=signalText;
+    $("signal").className="big-signal "+String(signalText).toLowerCase();
   }
-  if($("signalTop")) $("signalTop").className=d.signal==="BUY"?"up":d.signal==="SELL"?"down":"";
+  if($("signalTop")) $("signalTop").className=signalText==="BUY"?"up":signalText==="SELL"?"down":"";
 
   if($("pattern")) $("pattern").textContent=d.pattern||"-";
   if($("patternConf")) $("patternConf").textContent=pl.confidence==null?"-":pct(pl.confidence);
@@ -296,7 +313,12 @@ function renderPrediction(d){
   drawChart();
 }
 
+let predictionInFlight = false;
+let liveRefreshTimer = null;
+
 async function predictNow(){
+  if(predictionInFlight) return;
+  predictionInFlight = true;
   try{
     await restoreSavedToken();
     const saved=await tokenStatus();
@@ -309,7 +331,18 @@ async function predictNow(){
   }catch(e){
     if($("predictStatus")) $("predictStatus").textContent="✗ "+e.message;
     setStatus("✗ "+e.message,true);
+  } finally {
+    predictionInFlight = false;
   }
+}
+
+function scheduleLiveRefresh(){
+  if(liveRefreshTimer) clearInterval(liveRefreshTimer);
+  liveRefreshTimer = setInterval(() => {
+    if(!predictionInFlight){
+      predictNow();
+    }
+  }, 300000);
 }
 
 async function modelStatus(){
@@ -360,6 +393,19 @@ function parseTime(z){
   const d=new Date(raw);
   return Number.isNaN(d.getTime())?null:d;
 }
+function formatAxisLabel(date, rangeKey){
+  if(!date || Number.isNaN(date.getTime())) return "";
+  const range = String(rangeKey || "1D").toUpperCase();
+  const isRangeLong = range !== "1D";
+  return date.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: isRangeLong ? "short" : undefined,
+    year: isRangeLong ? "numeric" : undefined,
+    hour: !isRangeLong ? "2-digit" : undefined,
+    minute: !isRangeLong ? "2-digit" : undefined,
+    hour12: false,
+  });
+}
 function drawChart(){
   const c=$("chart");
   if(!c) return;
@@ -409,7 +455,6 @@ function drawChart(){
   const extra=(maxP-minP)*0.08||10;
   maxP+=extra;minP-=extra;
 
-  // Leave one slot for next prediction.
   const slots=visible+1;
   const x=i=>pad.l+(i+0.5)*(cw/slots);
   const y=v=>pad.t+(maxP-v)/(maxP-minP)*ch;
@@ -423,11 +468,16 @@ function drawChart(){
     ctx.fillText(fmt(maxP-(maxP-minP)*i/5,0),8,yy+4);
   }
 
+  const axisRange = String(chartRange || "1D").toUpperCase();
   const step=Math.max(1,Math.floor(visible/8));
   ctx.fillStyle="#8490a8";ctx.font="10px Arial";
   for(let i=0;i<visible;i+=step){
     const t=parseTime(data[i]);
-    if(t)ctx.fillText(t.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}),x(i)-20,H-22);
+    if(t){
+      const label = formatAxisLabel(t, axisRange);
+      const labelWidth = Math.max(64, label.length * 4.4);
+      ctx.fillText(label, x(i)-labelWidth/2, H-22);
+    }
   }
 
   const maxVol=Math.max(...data.map(z=>Number(z.volume)||0),1);
@@ -437,9 +487,9 @@ function drawChart(){
     const bull=cl>=o;
     ctx.strokeStyle=bull?"#20c77a":"#ef4444";
     ctx.fillStyle=bull?"#14b86a":"#ef4444";
-    ctx.lineWidth=1;
+    ctx.lineWidth=1.2;
     ctx.beginPath();ctx.moveTo(xx,y(h));ctx.lineTo(xx,y(l));ctx.stroke();
-    ctx.fillRect(xx-3,top,6,Math.max(2,bot-top));
+    ctx.fillRect(xx-4,top,8,Math.max(2,bot-top));
     const vh=((Number(z.volume)||0)/maxVol)*32;
     ctx.globalAlpha=.25;ctx.fillRect(xx-3,pad.t+ch-vh,6,vh);ctx.globalAlpha=1;
   });
@@ -493,29 +543,99 @@ function drawChart(){
     ctx.fillText(label10,Math.min(nx+8,W-150),Math.max(34,py10-10));
   }
 
-  // Levels.
-  function level(v,color,label){
+  const signal = String(prediction?.signal || prediction?.trade_call?.bias || "WAIT").toUpperCase();
+  const entryVal = Number(prediction?.entry ?? prediction?.trade_call?.entry);
+  const stopVal = Number(prediction?.stop_loss ?? prediction?.trade_call?.stop_loss);
+  const target1Val = Number(prediction?.target_1 ?? prediction?.trade_call?.target_1);
+  const target2Val = Number(prediction?.target_2 ?? prediction?.trade_call?.target_2);
+  const supportVal=Number(prediction?.support);
+  const resistanceVal=Number(prediction?.resistance);
+
+  if(signal === "BUY" && Number.isFinite(entryVal) && Number.isFinite(target1Val)){
+    const yEntry = y(entryVal), yTarget = y(target1Val), yStop = Number.isFinite(stopVal) ? y(stopVal) : y(entryVal);
+    ctx.fillStyle = "rgba(34, 197, 94, 0.10)";
+    ctx.fillRect(pad.l, Math.min(yEntry, yTarget), cw, Math.abs(yEntry - yTarget));
+    if(Number.isFinite(stopVal)){
+      ctx.strokeStyle = "rgba(255, 77, 93, 0.45)";
+      ctx.beginPath();ctx.moveTo(pad.l, yStop);ctx.lineTo(pad.l+cw, yStop);ctx.stroke();
+    }
+  }
+  if(signal === "SELL" && Number.isFinite(entryVal) && Number.isFinite(target1Val)){
+    const yEntry = y(entryVal), yTarget = y(target1Val), yStop = Number.isFinite(stopVal) ? y(stopVal) : y(entryVal);
+    ctx.fillStyle = "rgba(239, 68, 68, 0.10)";
+    ctx.fillRect(pad.l, Math.min(yEntry, yTarget), cw, Math.abs(yEntry - yTarget));
+    if(Number.isFinite(stopVal)){
+      ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
+      ctx.beginPath();ctx.moveTo(pad.l, yStop);ctx.lineTo(pad.l+cw, yStop);ctx.stroke();
+    }
+  }
+
+  if(Number.isFinite(supportVal)){
+    const yy=y(supportVal);
+    ctx.strokeStyle="#55d6ff";ctx.lineWidth=1;ctx.setLineDash([2,4]);
+    ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(pad.l+cw,yy);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle="#55d6ff";ctx.font="bold 10px Arial";ctx.fillText("SUP "+fmt(supportVal),pad.l+cw+8,yy+4);
+  }
+  if(Number.isFinite(resistanceVal)){
+    const yy=y(resistanceVal);
+    ctx.strokeStyle="#fbbf24";ctx.lineWidth=1;ctx.setLineDash([2,4]);
+    ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(pad.l+cw,yy);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle="#fbbf24";ctx.font="bold 10px Arial";ctx.fillText("RES "+fmt(resistanceVal),pad.l+cw+8,yy+4);
+  }
+
+  function level(v,color,label,offset=0){
     v=Number(v);
     if(!Number.isFinite(v)||v<lo||v>hi||v<minP||v>maxP)return;
     const yy=y(v);
-    ctx.strokeStyle=color;ctx.lineWidth=1.3;ctx.setLineDash([7,5]);
+    ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.setLineDash([7,5]);
     ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(pad.l+cw,yy);ctx.stroke();ctx.setLineDash([]);
     ctx.fillStyle=color;ctx.font="bold 10px Arial";
-    ctx.fillText(label+" "+fmt(v),pad.l+cw+8,yy+4);
+    ctx.fillText(label+" "+fmt(v),pad.l+cw+8,yy+4+offset);
   }
-  level(prediction?.entry,"#f5c542","ENTRY");
-  level(prediction?.stop_loss,"#ff4d5d","STOP");
-  level(prediction?.target_1,"#22c55e","T1");
-  level(prediction?.target_2,"#22c55e","T2");
+  level(entryVal,"#f5c542","ENTRY",0);
+  level(stopVal,"#ff4d5d","STOP",12);
+  level(target1Val,"#22c55e","T1",0);
+  level(target2Val,"#22c55e","T2",12);
+
+  const patternName=String(prediction?.pattern||"NONE").toUpperCase();
+  if(patternName && patternName !== "NONE"){
+    const endX=pad.l+cw+8;
+    const lineY=pad.t+18;
+    ctx.fillStyle="#d6e4ff";ctx.font="bold 11px Arial";
+    ctx.fillText("PATTERN: "+patternName, endX, lineY);
+    ctx.beginPath();ctx.moveTo(x(data.length-1), y(data[data.length-1].close));ctx.lineTo(endX-10, lineY-10);ctx.strokeStyle="#d6e4ff";ctx.lineWidth=1;ctx.stroke();
+  }
+
+  const signalText = String(prediction?.signal || prediction?.trade_call?.bias || "WAIT").toUpperCase();
+  if(signalText !== "WAIT"){
+    const signalColor=signalText==="BUY"?"#22c55e":signalText==="SELL"?"#ef4444":"#f5c542";
+    const markerPulse = 0.65 + ((Math.sin(Date.now()/220)+1)/2) * 0.35;
+    ctx.save();
+    ctx.globalAlpha = markerPulse;
+    ctx.fillStyle=signalColor;ctx.font="bold 12px Arial";
+    ctx.fillText("SIGNAL "+signalText, pad.l+cw+8, pad.t+40);
+    ctx.fillStyle=signalColor;ctx.beginPath();ctx.arc(nx-10, pad.t+18, 5 + markerPulse * 2, 0, Math.PI*2);ctx.fill();
+    ctx.restore();
+
+    const callText = (prediction?.trade_call?.setup || (signalText === "BUY" ? "LONG SETUP" : "SHORT SETUP")).toUpperCase();
+    ctx.fillStyle=signalColor;ctx.font="bold 11px Arial";
+    ctx.fillText(callText, pad.l+cw+8, pad.t+58);
+  }
 }
 
 async function loadChart(range="1D"){
   chartRange=range;
   try{
     const d=await getJSON("/api/chart-history?range="+encodeURIComponent(range)+"&t="+Date.now());
-    chartData=d.candles||[];
+    chartData=(d.candles||[]).map((c,i)=>({
+      ...c,
+      index: i,
+      prediction: Number.isFinite(Number(c.prediction)) ? Number(c.prediction) : undefined,
+      predictedDirection: c.predictedDirection || "",
+      predictionConfidence: Number.isFinite(Number(c.predictionConfidence)) ? Number(c.predictionConfidence) : undefined,
+      predictedPoints: Number.isFinite(Number(c.predictedPoints)) ? Number(c.predictedPoints) : undefined,
+    }));
     if($("predictionCount"))$("predictionCount").textContent="Historical ML predictions: waiting...";
-    // If the backend has the walk-forward endpoint, use it; otherwise chart still works.
     try{
       const p=await getJSON("/api/chart-predictions?range="+encodeURIComponent(range)+"&t="+Date.now());
       (p.predictions||[]).forEach(z=>{
@@ -541,8 +661,6 @@ async function loadChart(range="1D"){
 function fit(){pan=0;zoom=1;drawChart();}
 
 function bind(){
-  $("testBtn")?.addEventListener("click",testApi);
-  $("clearTokenBtn")?.addEventListener("click",clearToken);
   $("downloadBtn")?.addEventListener("click",downloadData);
   $("trainBtn")?.addEventListener("click",trainModel);
   $("checkBtn")?.addEventListener("click",checkData);
@@ -558,19 +676,34 @@ function bind(){
 
   const canvas=$("chart");
   if(canvas){
+    canvas.style.cursor="grab";
     canvas.addEventListener("wheel",e=>{
       e.preventDefault();
       zoom=Math.max(1,Math.min(12,zoom*(e.deltaY<0?1.18:.85)));
       drawChart();
     },{passive:false});
-    canvas.addEventListener("mousedown",e=>{dragging=true;dragX=e.clientX});
-    window.addEventListener("mouseup",()=>dragging=false);
+    canvas.addEventListener("mousedown",e=>{
+      dragging=true;
+      dragX=e.clientX;
+      dragStartPan=pan;
+      canvas.style.cursor="grabbing";
+    });
+    window.addEventListener("mouseup",()=>{
+      dragging=false;
+      canvas.style.cursor="grab";
+    });
+    window.addEventListener("mouseleave",()=>{dragging=false; canvas.style.cursor="grab";});
     window.addEventListener("mousemove",e=>{
       if(!dragging||!chartData.length)return;
       const cleanLen=chartData.filter(validCandle).length;
-      pan+=-(e.clientX-dragX)*(cleanLen/Math.max(1,canvas.clientWidth))/zoom;
-      pan=Math.max(0,Math.min(Math.max(0,cleanLen-Math.round(cleanLen/zoom)),pan));
-      dragX=e.clientX;drawChart();
+      if(!cleanLen) return;
+      const visible=Math.max(25,Math.min(cleanLen,Math.round(cleanLen/zoom)));
+      const maxPan=Math.max(0, cleanLen-visible);
+      const deltaX=e.clientX-dragX;
+      const deltaCandles = (deltaX / Math.max(1, canvas.clientWidth)) * visible * 1.2;
+      pan = dragStartPan + deltaCandles;
+      pan=Math.max(0,Math.min(maxPan,pan));
+      drawChart();
     });
     canvas.addEventListener("dblclick",fit);
   }
@@ -591,13 +724,11 @@ async function boot(){
   await predictNow();
 }
 boot();
+scheduleLiveRefresh();
 setInterval(poll,1000);
 setInterval(updateLiveClock,1000);
 setInterval(tokenStatus,5000);
 setInterval(modelStatus,10000);
-setInterval(()=>{
-  predictNow();
-},30000);
 </script>
 
 </body>

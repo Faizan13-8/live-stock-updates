@@ -37,6 +37,7 @@ status = {
 
 LIVE_MONITOR_THREAD = None
 LIVE_MONITOR_LOCK = Lock()
+LIVE_MONITOR_INTERVAL_SECONDS = 300
 
 
 def get_market_status(now=None):
@@ -186,7 +187,7 @@ def api_train():
 
 @app.post("/api/retrain-if-needed")
 def api_retrain_if_needed():
-    needs, summary = should_retrain(window=100, min_samples=25, min_accuracy=0.80, max_mape=0.50)
+    needs, summary = should_retrain(window=25, min_samples=5, min_accuracy=0.76, max_mape=0.60, batch_size=5)
     if not needs:
         return jsonify({"ok": True, "triggered": False, "summary": summary})
     started = start_training_job()
@@ -241,7 +242,7 @@ def _run_live_prediction_cycle(token):
             PREDICTION_LEDGER[:] = PREDICTION_LEDGER[-120:]
         _sync_prediction_feedback(token)
         summary = calculate_accuracy(window=100)
-        should_retrain_flag, retrain_summary = should_retrain(window=100, min_samples=25, min_accuracy=0.80, max_mape=0.50)
+        should_retrain_flag, retrain_summary = should_retrain(window=25, min_samples=5, min_accuracy=0.76, max_mape=0.60, batch_size=5)
         if should_retrain_flag and not status.get("running"):
             try:
                 start_training_job()
@@ -257,7 +258,7 @@ def _run_live_prediction_cycle(token):
 
 def _live_monitor_loop():
     while True:
-        time.sleep(60)
+        time.sleep(LIVE_MONITOR_INTERVAL_SECONDS)
         if not market_is_open():
             continue
         token = read_server_token()
@@ -380,11 +381,11 @@ def api_model_status():
 
 @app.get("/api/model-feedback")
 def api_model_feedback():
-    return jsonify({"ok": True, "summary": calculate_accuracy(window=100)})
+    return jsonify({"ok": True, "summary": calculate_accuracy(window=25)})
 
 @app.get("/api/retrain-status")
 def api_retrain_status():
-    needs, summary = should_retrain(window=100, min_samples=25, min_accuracy=0.80, max_mape=0.50)
+    needs, summary = should_retrain(window=25, min_samples=5, min_accuracy=0.76, max_mape=0.60, batch_size=5)
     return jsonify({"ok": True, "needs_retrain": needs, "summary": summary})
 
 @app.get("/api/stats")

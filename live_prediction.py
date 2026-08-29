@@ -29,6 +29,7 @@ PATTERN_STATS_FILE = MODEL_DIR / "nifty_v5_pattern_stats.json"
 IST = ZoneInfo("Asia/Kolkata")
 
 _NEWS_CACHE = {"ts": 0.0, "items": [], "sentiment": 0.0}
+_NEWS_CACHE_TTL_SECONDS = 300
 
 def _headers(token):
     return {"Accept": "application/json", "Authorization": f"Bearer {token}"}
@@ -127,7 +128,7 @@ def _headline_sentiment(text):
 def _fetch_news(token):
     global _NEWS_CACHE
     now=time.time()
-    if now-_NEWS_CACHE["ts"]<60:
+    if now-_NEWS_CACHE["ts"]<_NEWS_CACHE_TTL_SECONDS:
         return _NEWS_CACHE
     key=quote(INSTRUMENT_KEY,safe="")
     url=f"{NEWS_URL}?category=instrument_keys&instrument_keys={key}"
@@ -310,10 +311,29 @@ def predict_live(token):
         elif final_dir=="DOWN" and p5<0: signal="SELL"
     levels=_levels(current,tech["atr"],tech["support"],tech["resistance"],p5,final_dir if final_dir!="FLAT" else ("UP" if p5>=0 else "DOWN"),confidence) if signal!="WAIT" else {"entry":None,"stop_loss":None,"target_1":None,"target_2":None,"risk_reward":None}
 
+    setup_label = (
+        "Bullish continuation" if signal == "BUY" and tech["trend"] in ("UP", "STRONG UP") else
+        "Bearish continuation" if signal == "SELL" and tech["trend"] in ("DOWN", "STRONG DOWN") else
+        "Breakout setup" if signal in ("BUY", "SELL") and abs(depth_imb) > 0.2 else
+        "Range compression"
+    )
+    trade_call = {
+        "bias": signal,
+        "setup": setup_label,
+        "entry": levels.get("entry"),
+        "stop_loss": levels.get("stop_loss"),
+        "target_1": levels.get("target_1"),
+        "target_2": levels.get("target_2"),
+        "risk_reward": levels.get("risk_reward"),
+        "confidence": round(float(confidence), 4),
+        "reason": f"{tech['trend']} / RSI {tech['rsi']:.1f} / news {news_sentiment:+.2f} / depth {depth_imb:+.2f}",
+    }
+
     next_price=current+p5
     return {
         "model_version":"V5.1",
         "timestamp":str(df["timestamp"].iloc[-1]),
+        "updated_at": datetime.now(IST).isoformat(timespec="seconds"),
         "current_price":current,
         "market_status":market,
         "next_5m":{"direction":final_dir,"expected_points":round(p5,2),"expected_price":round(next_price,2),
@@ -336,6 +356,7 @@ def predict_live(token):
             "total_sell_quantity":round(float(quote_data.get("total_sell_quantity",0)),0)},
         "news":{"sentiment":round(float(news.get("sentiment",0.0)),4),"items":news.get("items",[])[:8],"updated_at":news.get("ts")},
         "levels":levels,"entry":levels["entry"],"stop_loss":levels["stop_loss"],"target_1":levels["target_1"],"target_2":levels["target_2"],
+        "trade_call": trade_call,
         "reasons":[
             f"ML base direction={direction}, probability={base_conf:.2f}",
             f"Pattern={pattern}, learned bias={pattern_bias:.2f}",
