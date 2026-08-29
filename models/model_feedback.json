@@ -22,5 +22,85 @@
     "actual_points": 0.0,
     "actual_direction": "FLAT",
     "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:16:06",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:16:31",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:17:12",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:17:44",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:18:04",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:19:10",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:20:01",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:20:07",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:20:07",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:20:33",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
   }
 ]

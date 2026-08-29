@@ -39,13 +39,18 @@ LIVE_MONITOR_THREAD = None
 LIVE_MONITOR_LOCK = Lock()
 
 
+def get_market_status(now=None):
+    now = now or datetime.now(ZoneInfo("Asia/Kolkata"))
+    is_weekday = now.weekday() < 5
+    is_market_hours = dt_time(9, 15) <= now.time() <= dt_time(15, 30)
+    is_open = is_weekday and is_market_hours
+    label = "OPEN" if is_open else "CLOSED"
+    subtext = "Market is open" if is_open else "Market is closed"
+    return {"is_open": is_open, "label": label, "subtext": subtext, "timestamp": now.isoformat()}
+
+
 def market_is_open():
-    now = datetime.now(ZoneInfo("Asia/Kolkata"))
-    if now.weekday() >= 5:
-        return False
-    market_open = dt_time(9, 15)
-    market_close = dt_time(15, 30)
-    return market_open <= now.time() <= market_close
+    return get_market_status()["is_open"]
 
 
 def set_status(**kwargs):
@@ -191,7 +196,7 @@ def api_retrain_if_needed():
 
 def _sync_prediction_feedback(token):
     try:
-        current = get_chart_history("1D", token)
+        current = get_chart_history(token, "1D")
         candles = current.get("candles", []) if isinstance(current, dict) else []
         if not candles:
             return
@@ -279,6 +284,9 @@ def api_predict():
         result = _run_live_prediction_cycle(token)
         if result is None:
             raise RuntimeError("Prediction cycle failed. Check token and market data.")
+        market_state = get_market_status()
+        result["market_status"] = market_state["label"]
+        result["market_subtext"] = market_state["subtext"]
         start_live_monitor()
         return jsonify({"ok": True, **result})
     except Exception as e:
@@ -292,7 +300,7 @@ def api_chart_predictions():
         if not TOKEN:
             return jsonify({"ok": False, "message": "Token not saved."}), 400
 
-        payload = get_chart_history(rng, TOKEN)
+        payload = get_chart_history(TOKEN, rng)
         rows = payload.get("candles", []) if isinstance(payload, dict) else []
         if not rows:
             return jsonify({"ok": True, "predictions": [], "count": 0})
@@ -346,7 +354,7 @@ def api_chart_predictions():
 def api_chart_history():
     try:
         rng = request.args.get("range", "1D").upper()
-        return jsonify({"ok": True, **get_chart_history(rng, TOKEN)})
+        return jsonify({"ok": True, **get_chart_history(TOKEN, rng)})
     except Exception as e:
         return jsonify({"ok": False, "message": str(e)}), 400
 

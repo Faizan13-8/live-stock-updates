@@ -193,6 +193,13 @@ def _build_training_compatible_features(df):
     x["time_cos"]=np.cos(2*np.pi*mins/1440.0)
     return x, labels
 
+
+def _make_input(df):
+    x, labels = _build_training_compatible_features(df)
+    cols = json.loads(FEATURE_FILE.read_text(encoding="utf-8"))
+    clean = clean_X(x, cols)
+    return clean, cols, labels
+
 def _pressure(df):
     recent=df.tail(20); close=recent["close"].astype(float); open_=recent["open"].astype(float); vol=recent["volume"].fillna(0).astype(float)
     signed=np.sign(close-open_)

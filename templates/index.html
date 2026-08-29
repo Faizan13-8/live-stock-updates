@@ -223,11 +223,27 @@ async function checkData(){
   }catch(e){ setStatus("✗ "+e.message,true); }
 }
 
+function updateMarketStatusLabel(statusText, subText){
+  const label = $("marketStatus");
+  const small = $("marketSub");
+  if(!label) return;
+  label.textContent = statusText || "MARKET STATUS";
+  if(small) small.textContent = subText || "Checking...";
+  const dot = document.querySelector(".market .dot");
+  const isOpen = String(statusText || "").toUpperCase() === "OPEN";
+  if(dot){
+    dot.style.background = isOpen ? "#22c55e" : "#ef4444";
+    dot.style.boxShadow = isOpen ? "0 0 0 5px rgba(34,197,94,0.18)" : "0 0 0 5px rgba(239,68,68,0.18)";
+  }
+}
+
 function renderPrediction(d){
   prediction = d || {};
   const a = d.next_5m || {};
   const b = d.next_10m || {};
   const pl = d.pattern_learning || {};
+  const marketState = String(d.market_status || "CLOSED").toUpperCase();
+  updateMarketStatusLabel(marketState, d.market_subtext || (marketState === "OPEN" ? "Market is open" : "Market is closed"));
 
   if($("currentPrice")) $("currentPrice").textContent=fmt(d.current_price);
   if($("candleTime")) $("candleTime").textContent=(d.timestamp||"-").replace("T"," ");
