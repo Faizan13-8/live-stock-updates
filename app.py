@@ -2,7 +2,7 @@
 from flask import Flask, render_template, request, jsonify
 from threading import Thread, Lock
 from pathlib import Path
-from datetime import datetime, time as dt_time
+from datetime import datetime, timedelta, time as dt_time
 from zoneinfo import ZoneInfo
 import json
 import importlib
@@ -10,12 +10,15 @@ import sqlite3
 import math
 import time
 
+import pandas as pd
+
 from upstox_api import test_connection, download_history
 from database import get_stats
 from data_check import check_database
 from model_feedback import calculate_accuracy, should_retrain, record_prediction
 import train_model as train_module
 from live_prediction import predict_live, get_chart_history
+from chart_patterns import attach_overlays_to_history
 from config import read_server_token, write_server_token, clear_server_token
 
 app = Flask(__name__)
@@ -38,6 +41,22 @@ status = {
 LIVE_MONITOR_THREAD = None
 LIVE_MONITOR_LOCK = Lock()
 LIVE_MONITOR_INTERVAL_SECONDS = 300
+
+
+def _initial_saved_count():
+    # Without this the dashboard reads "SAVED CANDLES 0" on a fresh page load even
+    # when the database is full, because `saved` was only ever set by a download run.
+    try:
+        return int(get_stats().get("count", 0) or 0)
+    except Exception:
+        return 0
+
+
+status["saved"] = _initial_saved_count()
+
+# Candles are 5-minute bars. Allow a couple of missing bars when settling a
+# forecast, but never bridge a session break.
+FEEDBACK_RESOLUTION_WINDOW = timedelta(minutes=15)
 
 
 def get_market_status(now=None):
@@ -201,14 +220,41 @@ def _sync_prediction_feedback(token):
         candles = current.get("candles", []) if isinstance(current, dict) else []
         if not candles:
             return
-        latest = candles[-1]
-        latest_close = float(latest.get("close", 0.0) or 0.0)
+        # Chart candles carry ISO timestamps while ledger entries carry pandas repr
+        # strings, so compare parsed instants instead of raw text.
+        observed = []
+        for row in candles:
+            ts = pd.to_datetime(row.get("timestamp"), errors="coerce", utc=True)
+            if pd.isna(ts):
+                continue
+            observed.append((ts, float(row.get("close", 0.0) or 0.0)))
+        observed.sort(key=lambda pair: pair[0])
+        if not observed:
+            return
         for item in list(PREDICTION_LEDGER):
             if item.get("resolved"):
                 continue
+            item_ts = pd.to_datetime(item.get("timestamp"), errors="coerce", utc=True)
+            if pd.isna(item_ts):
+                continue
+            # A next_5m call is settled by the candle that immediately follows it.
+            # Scoring every open entry against the newest close instead labels a
+            # 5-minute forecast with all the drift since it was made, and that value
+            # is what the feedback file, the retrain trigger and the live calibrator
+            # all consume.
+            following = next((pair for pair in observed if pair[0] > item_ts), None)
+            if following is None:
+                continue
+            next_ts, next_close = following
+            if next_ts - item_ts > FEEDBACK_RESOLUTION_WINDOW:
+                # Session break: the adjacent 5-minute candle was never observed, so
+                # discard the entry rather than record an overnight gap as its result.
+                item["resolved"] = True
+                item["unscored_reason"] = "no adjacent candle"
+                continue
             predicted = float(item.get("expected_points", 0.0) or 0.0)
             base = float(item.get("current_price", 0.0) or 0.0)
-            actual_points = latest_close - base
+            actual_points = next_close - base
             actual_direction = "UP" if actual_points > 0 else "DOWN" if actual_points < 0 else "FLAT"
             record_prediction(
                 predicted_direction=item.get("direction", "FLAT"),
@@ -237,23 +283,56 @@ def _run_live_prediction_cycle(token):
             "model_version": str(result.get("model_version", "unknown")),
             "resolved": False,
         }
-        PREDICTION_LEDGER.append(record)
+        if not any(str(row.get("timestamp")) == record["timestamp"] for row in PREDICTION_LEDGER):
+            PREDICTION_LEDGER.append(record)
         if len(PREDICTION_LEDGER) > 120:
             PREDICTION_LEDGER[:] = PREDICTION_LEDGER[-120:]
         _sync_prediction_feedback(token)
         summary = calculate_accuracy(window=100)
-        should_retrain_flag, retrain_summary = should_retrain(window=25, min_samples=5, min_accuracy=0.76, max_mape=0.60, batch_size=5)
+        last_retrain = status.get("last_retrain_at")
+        should_retrain_flag, retrain_summary = should_retrain(
+            window=25,
+            min_samples=5,
+            min_accuracy=0.76,
+            max_mape=0.60,
+            batch_size=5,
+            last_retrain_at=last_retrain,
+            cooldown_minutes=60,
+        )
         if should_retrain_flag and not status.get("running"):
             try:
-                start_training_job()
+                started = start_training_job()
+                if started:
+                    status["last_retrain_at"] = datetime.now(ZoneInfo("Asia/Kolkata")).isoformat(timespec="seconds")
             except Exception:
                 pass
         result["accuracy"] = summary
         result["retrain_needed"] = should_retrain_flag
         result["retrain_summary"] = retrain_summary
         return result
-    except Exception:
-        return None
+    except Exception as exc:
+        market_state = get_market_status()
+        return {
+            "signal": "WAIT",
+            "signal_score": 0.0,
+            "market_status": market_state["label"],
+            "market_subtext": market_state["subtext"],
+            "current_price": None,
+            "next_5m": {"direction": "FLAT", "expected_points": 0.0, "expected_price": None, "confidence": 0.0},
+            "next_10m": {"direction": "FLAT", "expected_points": 0.0, "expected_price": None},
+            "trade_call": {"bias": "WAIT", "setup": "Wait for confirmation", "entry": None, "stop_loss": None, "target_1": None, "target_2": None, "risk_reward": None},
+            "pattern": "NONE",
+            "trend": "UNKNOWN",
+            "rsi": None,
+            "vwap": None,
+            "support": None,
+            "resistance": None,
+            "buyer_pressure": 0.0,
+            "seller_pressure": 0.0,
+            "retrain_needed": False,
+            "accuracy": {"samples": 0, "direction_accuracy": 0.0, "mape": 0.0, "best_model_version": "unknown"},
+            "note": f"Prediction unavailable: {exc}",
+        }
 
 
 def _live_monitor_loop():
@@ -298,10 +377,8 @@ def api_predict():
 def api_chart_predictions():
     try:
         rng = request.args.get("range", "1D").upper()
-        if not TOKEN:
-            return jsonify({"ok": False, "message": "Token not saved."}), 400
-
-        payload = get_chart_history(TOKEN, rng)
+        token = _token_from_request() or read_server_token()
+        payload = get_chart_history(token, rng) if token else get_chart_history(None, rng)
         rows = payload.get("candles", []) if isinstance(payload, dict) else []
         if not rows:
             return jsonify({"ok": True, "predictions": [], "count": 0})
@@ -311,8 +388,13 @@ def api_chart_predictions():
         import live_prediction as lp
 
         model_dir = Path(__file__).resolve().parent / "models"
-        m5 = joblib.load(model_dir / "nifty_v5_5m_points.pkl")
-        dm = joblib.load(model_dir / "nifty_v5_5m_direction.pkl")
+        m5_path = model_dir / "nifty_v5_5m_points.pkl"
+        dm_path = model_dir / "nifty_v5_5m_direction.pkl"
+        if not m5_path.exists() or not dm_path.exists():
+            return jsonify({"ok": True, "predictions": [], "count": 0})
+
+        m5 = joblib.load(m5_path)
+        dm = joblib.load(dm_path)
 
         df = pd.DataFrame(rows)
         df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
@@ -324,38 +406,47 @@ def api_chart_predictions():
               .drop_duplicates("timestamp", keep="last")
               .reset_index(drop=True))
 
+        df["_source_index"] = df.index
+        max_points = 500
+        if len(df) > max_points:
+            step = max(1, len(df) // max_points)
+            df = df.iloc[::step].copy().reset_index(drop=True)
+
         results=[]
-        warmup=60
-        for idx in range(warmup-1, len(df)):
+        warmup=30
+        for idx in range(max(warmup - 1, 0), len(df)):
             try:
                 x, cols, _ = lp._make_input(df.iloc[:idx+1].copy())
-                row=x.iloc[[-1]][cols]
-                pts=float(m5.predict(row)[0])
-                probs=dm.predict_proba(row)[0]
-                classes=list(getattr(dm,"classes_",range(len(probs))))
-                pm={int(k):float(v) for k,v in zip(classes,probs)}
-                choices=[(pm.get(0,0.0),"DOWN"),(pm.get(1,0.0),"FLAT"),(pm.get(2,0.0),"UP")]
-                conf,direction=max(choices,key=lambda z:z[0])
-                cur=float(df["close"].iloc[idx])
+                row = x.iloc[[-1]][cols]
+                pts = float(m5.predict(row)[0])
+                probs = dm.predict_proba(row)[0]
+                classes = list(getattr(dm, "classes_", range(len(probs))))
+                pm = {int(k): float(v) for k, v in zip(classes, probs)}
+                choices = [(pm.get(0, 0.0), "DOWN"), (pm.get(1, 0.0), "FLAT"), (pm.get(2, 0.0), "UP")]
+                conf, direction = max(choices, key=lambda z: z[0])
+                cur = float(df["close"].iloc[idx])
                 results.append({
-                    "index":idx,
-                    "timestamp":df["timestamp"].iloc[idx].isoformat(),
-                    "prediction":round(cur+pts,2),
-                    "expected_points":round(pts,2),
-                    "direction":direction,
-                    "confidence":round(float(conf),4)
+                    "index": int(df["_source_index"].iloc[idx]),
+                    "timestamp": df["timestamp"].iloc[idx].isoformat(),
+                    "prediction": round(cur + pts, 2),
+                    "expected_points": round(pts, 2),
+                    "direction": direction,
+                    "confidence": round(float(conf), 4),
                 })
             except Exception:
                 continue
-        return jsonify({"ok":True,"range":rng,"predictions":results,"count":len(results)})
+
+        return jsonify({"ok": True, "range": rng, "predictions": results, "count": len(results)})
     except Exception as e:
-        return jsonify({"ok":False,"message":str(e)}),400
+        return jsonify({"ok": False, "message": str(e)}), 400
 
 @app.get("/api/chart-history")
 def api_chart_history():
     try:
         rng = request.args.get("range", "1D").upper()
-        return jsonify({"ok": True, **get_chart_history(TOKEN, rng)})
+        payload = get_chart_history(TOKEN, rng)
+        payload["chart_context"] = attach_overlays_to_history(payload.get("candles", []))
+        return jsonify({"ok": True, **payload})
     except Exception as e:
         return jsonify({"ok": False, "message": str(e)}), 400
 
@@ -393,4 +484,8 @@ def api_stats():
     return jsonify(get_stats())
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    # Jinja caches compiled templates when debug is off, so edits to
+    # templates/index.html would not appear until a full restart.
+    app.config["TEMPLATES_AUTO_RELOAD"] = True
+    app.jinja_env.auto_reload = True
+    app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False, threaded=True)

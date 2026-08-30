@@ -1,30 +1,51 @@
 {
   "model_version": "V5.1",
-  "trained_at": "2026-08-29T16:42:04.960242+05:30",
+  "trained_at": "2026-08-30T19:31:34.541397+05:30",
   "rows_total": 55663,
-  "rows_used": 55661,
-  "feature_count": 68,
+  "rows_used": 54162,
+  "rows_dropped_unusable_target": 1501,
+  "feature_count": 70,
   "historical_start": "2023-08-28T09:15:00+05:30",
   "historical_end": "2026-08-28T15:25:00+05:30",
-  "train_rows": 38962,
-  "validation_rows": 8349,
-  "test_rows": 8350,
+  "train_rows": 37913,
+  "validation_rows": 8124,
+  "test_rows": 8125,
+  "best_iteration": {
+    "5m": 26,
+    "10m": 0,
+    "direction": 149
+  },
   "metrics": {
     "5m": {
-      "MAE": 13.085311498167952,
-      "RMSE": 26.44918974859064,
-      "R2": -0.013587326290654733,
-      "directional_accuracy": 0.5153293413173653
+      "MAE": 11.278694967424697,
+      "RMSE": 15.986079185193232,
+      "R2": -0.0035962330754535365,
+      "directional_accuracy": 0.5139215443633214,
+      "directional_baseline": 0.5009281029575547,
+      "directional_edge": 0.012993441405766637
     },
     "direction": {
-      "Accuracy": 0.3668263473053892,
-      "F1": 0.3337302020070531,
-      "Precision": 0.3575130855367667,
-      "Recall": 0.34992469658462566
+      "Accuracy": 0.38264615384615386,
+      "Baseline": 0.37538461538461537,
+      "Edge": 0.007261538461538486,
+      "StdErr": 0.005547001962252291,
+      "EdgeSigmas": 1.3090924630915453,
+      "F1": 0.31403416790832855,
+      "Precision": 0.3726672833950679,
+      "Recall": 0.34931252830036624
     },
     "pattern": {
       "enabled": true,
-      "samples": 52821
+      "samples": 51357
     }
+  },
+  "verdict": {
+    "tradeable": false,
+    "headline": "NO TRADEABLE EDGE. Do not risk money on these signals.",
+    "reasons": [
+      "Direction edge over the always-guess-the-common-class baseline is +0.73% (1.3 sigma) \u2014 not statistically distinguishable from chance.",
+      "Point forecast R2 is -0.0036. Anything at or below zero means the model predicts the size of the next move worse than just guessing the average move."
+    ],
+    "min_edge_sigmas": 2.0
   }
 }

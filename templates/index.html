@@ -13,6 +13,10 @@
   <div class="market"><span class="dot"></span><div><b id="marketStatus">MARKET STATUS</b><small id="marketSub">Checking...</small></div></div>
   <div class="top-actions"><button class="ghost" id="modelTab">Model Status</button><button class="ghost" id="dataTab">Data Check</button></div>
 </header>
+<!-- Sits above everything. The gate that suppresses trade signals is silent by
+     design, so without this the screen looks like a normal dashboard that just
+     happens to always say WAIT. -->
+<div id="edgeBanner" style="display:none;padding:10px 16px;font:600 13px/1.5 system-ui,sans-serif;text-align:center"></div>
 
 <main class="wrap">
 <section class="control card">
@@ -99,7 +103,7 @@
 </section>
 
 <section class="bottom-grid">
-  <div class="card"><h2>Model Performance</h2><div id="modelStatus" class="quality">Loading...</div><div class="table-like"><div><span>5M MAE</span><b id="mae5">-</b></div><div><span>5M RMSE</span><b id="rmse5">-</b></div><div><span>5M R²</span><b id="r25">-</b></div><div><span>Direction Accuracy</span><b id="dirAcc">-</b></div></div></div>
+  <div class="card"><h2>Model Performance</h2><div id="modelStatus" class="quality">Loading...</div><div id="modelVerdict" class="quality">-</div><div class="table-like"><div><span>5M MAE</span><b id="mae5">-</b></div><div><span>5M RMSE</span><b id="rmse5">-</b></div><div><span>5M R²</span><b id="r25">-</b></div><div><span>Direction Accuracy</span><b id="dirAcc">-</b></div><div><span>Baseline (always guess commonest)</span><b id="dirBase">-</b></div><div><span>Edge over baseline</span><b id="dirEdge">-</b></div><div><span>Live outcomes recorded</span><b id="fbSamples">-</b></div><div><span>Live hit rate</span><b id="fbAcc">-</b></div></div><div id="verdictReasons" class="note"></div></div>
   <div class="card"><h2>Training Dataset</h2><div class="table-like"><div><span>Total Rows</span><b id="rowsTotal">-</b></div><div><span>Rows Used</span><b id="rowsUsed">-</b></div><div><span>Features</span><b id="features">-</b></div><div><span>Train / Val / Test</span><b id="split">-</b></div></div></div>
   <div class="card"><h2>Database & System</h2><div class="table-like"><div><span>Database Rows</span><b id="dbCount">-</b></div><div><span>Database Last</span><b id="dbLast">-</b></div><div><span>Model</span><b id="modelState">-</b></div></div></div>
 </section>
@@ -110,24 +114,35 @@
 
 <script>
 const $ = id => document.getElementById(id);
+// Shared by drawChart and the wheel handler, so it cannot live inside drawChart.
+const pad = {l:62,r:165,t:24,b:62};
 let prediction = null;
 let chartData = [];
 let chartRange = "1D";
+let chartContext = {};
 let zoom = 1;
 let pan = 0;
 let dragging = false;
 let dragX = 0;
 let dragStartPan = 0;
 
+// Number(null) is 0 and Number("") is 0, both of which are finite. Without an
+// explicit null check a missing value renders as a confident "0.00" — an
+// undefined VWAP looked like a VWAP of zero and an unmeasured accuracy looked
+// like a measured 0.0%.
+function _blank(v){ return v === null || v === undefined || v === ""; }
 function fmt(v, d=2){
+  if(_blank(v)) return "-";
   const n = Number(v);
   return Number.isFinite(n) ? n.toLocaleString("en-IN",{minimumFractionDigits:d,maximumFractionDigits:d}) : "-";
 }
 function pct(v){
+  if(_blank(v)) return "-";
   const n = Number(v);
   return Number.isFinite(n) ? (n*100).toFixed(1)+"%" : "-";
 }
 function num(v){
+  if(_blank(v)) return "-";
   const n = Number(v);
   return Number.isFinite(n) ? n.toLocaleString("en-IN") : "-";
 }
@@ -241,10 +256,37 @@ function updateMarketStatusLabel(statusText, subText){
   }
 }
 
+function renderEdgeBanner(q){
+  const el=$("edgeBanner");
+  if(!el) return;
+  const acc=q.validation_directional_accuracy, base=q.validation_directional_baseline;
+  if(q.tradeable){
+    el.style.display="block";
+    el.style.background="#0f2e1a"; el.style.color="#5ee08a";
+    el.textContent="Edge detected ("+pct(acc)+" vs "+pct(base)+" baseline, "+fmt(q.edge_sigmas,1)+" sigma). Paper-trade before risking money.";
+    return;
+  }
+  el.style.display="block";
+  el.style.background="#3a1113"; el.style.color="#ff9a9a";
+  const detail = (acc!=null&&base!=null)
+    ? " Direction "+pct(acc)+" vs "+pct(base)+" baseline = "+fmt(q.edge_sigmas,1)+" sigma; "+fmt(q.minimum_edge_sigmas,1)+" sigma required."
+    : "";
+  el.textContent="⚠ "+(q.verdict||"No edge verdict — retrain.")+detail+" Trade signals are switched off.";
+}
+
 function renderPrediction(d){
   prediction = d || {};
   const a = d.next_5m || {};
   const b = d.next_10m || {};
+  renderEdgeBanner(d.model_quality || {});
+  const forecastAvailable = d.model_quality?.trade_signals_enabled !== false && a.available !== false;
+  // Say *why* the forecast is withheld. "Validation insufficient" reads like a
+  // transient loading state; the gate is closed because the model failed its
+  // edge test, and the trader needs to know that is the reason.
+  const gateReason = d.model_quality?.tradeable === false
+    ? "Blocked — no proven edge"
+    : "Validation insufficient";
+  const forecastText = forecastAvailable ? null : gateReason;
   const pl = d.pattern_learning || {};
   const trade = d.trade_call || {};
   const signalText = String(trade.bias || d.signal || "WAIT").toUpperCase();
@@ -253,11 +295,15 @@ function renderPrediction(d){
 
   if($("currentPrice")) $("currentPrice").textContent=fmt(d.current_price);
   if($("candleTime")) $("candleTime").textContent=(d.timestamp||"-").replace("T"," ");
-  if($("dir5")) $("dir5").textContent=a.direction||"-";
-  if($("points5")) $("points5").textContent=(Number(a.expected_points)>=0?"+":"")+fmt(a.expected_points);
-  if($("price5")) $("price5").textContent="Expected "+fmt(a.expected_price);
-  if($("dir10")) $("dir10").textContent=b.direction||"-";
-  if($("price10")) $("price10").textContent="Expected "+fmt(b.expected_price);
+  if($("ohlc")){
+    const lc = d.latest_candle || {};
+    $("ohlc").textContent = "O "+fmt(lc.open)+"  H "+fmt(lc.high)+"  L "+fmt(lc.low)+"  C "+fmt(lc.close);
+  }
+  if($("dir5")) $("dir5").textContent=forecastText || a.direction||"-";
+  if($("points5")) $("points5").textContent=forecastText || ((Number(a.expected_points)>=0?"+":"")+fmt(a.expected_points));
+  if($("price5")) $("price5").textContent=forecastText || ("Expected "+fmt(a.expected_price));
+  if($("dir10")) $("dir10").textContent=forecastText || b.direction||"-";
+  if($("price10")) $("price10").textContent=forecastText || ("Expected "+fmt(b.expected_price));
   if($("signalTop")) $("signalTop").textContent=signalText;
   if($("scoreTop")) $("scoreTop").textContent="RR "+fmt(trade.risk_reward ?? d.risk_reward ?? d.levels?.risk_reward ?? 0,2);
   const retrainState = d.retrain_needed ? "Auto-retrain: needed" : "Auto-retrain: healthy";
@@ -273,11 +319,11 @@ function renderPrediction(d){
   ].join(" • ");
   if($("liveSignalMeta")) $("liveSignalMeta").textContent = "Live feed: "+(d.timestamp||"waiting")+" | "+tradeMeta+" | "+retrainState+" | "+patternLabel;
 
-  if($("points5b")) $("points5b").textContent=(Number(a.expected_points)>=0?"+":"")+fmt(a.expected_points);
-  if($("price5b")) $("price5b").textContent=fmt(a.expected_price);
-  if($("conf5b")) $("conf5b").textContent=pct(a.confidence);
-  if($("points10b")) $("points10b").textContent=(Number(b.expected_points)>=0?"+":"")+fmt(b.expected_points);
-  if($("price10b")) $("price10b").textContent=fmt(b.expected_price);
+  if($("points5b")) $("points5b").textContent=forecastText || ((Number(a.expected_points)>=0?"+":"")+fmt(a.expected_points));
+  if($("price5b")) $("price5b").textContent=forecastText || fmt(a.expected_price);
+  if($("conf5b")) $("conf5b").textContent=forecastText || pct(a.confidence);
+  if($("points10b")) $("points10b").textContent=forecastText || ((Number(b.expected_points)>=0?"+":"")+fmt(b.expected_points));
+  if($("price10b")) $("price10b").textContent=forecastText || fmt(b.expected_price);
   if($("bias")) $("bias").textContent=signalText;
   if($("conf5")) $("conf5").textContent="Confidence "+pct(a.confidence);
   if($("modelVersion")) $("modelVersion").textContent="MODEL "+(d.model_version||"-");
@@ -288,13 +334,21 @@ function renderPrediction(d){
   }
   if($("signalTop")) $("signalTop").className=signalText==="BUY"?"up":signalText==="SELL"?"down":"";
 
-  if($("pattern")) $("pattern").textContent=d.pattern||"-";
+  // The candlestick pattern and the multi-bar chart structure are different
+  // things, and the hit rate below belongs to the candlestick one. Showing the
+  // structure's name next to the candle pattern's hit rate is what the backend
+  // used to do.
+  if($("pattern")) $("pattern").textContent=
+    (d.candle_pattern||d.pattern||"-") +
+    (d.structure_pattern && d.structure_pattern!=="NONE" ? "  /  "+d.structure_pattern : "");
   if($("patternConf")) $("patternConf").textContent=pl.confidence==null?"-":pct(pl.confidence);
   if($("patternDir")) $("patternDir").textContent=pl.direction||"-";
-  if($("patternHit")) $("patternHit").textContent=pl.historical_hit_rate==null?"-":pct(pl.historical_hit_rate);
+  if($("patternHit")) $("patternHit").textContent=pl.historical_hit_rate==null?"-":pct(pl.historical_hit_rate)+" ("+(pl.pattern||"?")+")";
   if($("trend")) $("trend").textContent=d.trend||"-";
   if($("rsi")) $("rsi").textContent=fmt(d.rsi);
-  if($("vwap")) $("vwap").textContent=fmt(d.vwap);
+  // vwap is null for the index (no volume). fmt() now renders that as "-"
+  // instead of "0.00"; the note explains why.
+  if($("vwap")) $("vwap").textContent=d.vwap==null ? "n/a (index)" : fmt(d.vwap);
   if($("support")) $("support").textContent=fmt(d.support);
   if($("resistance")) $("resistance").textContent=fmt(d.resistance);
   if($("score")) $("score").textContent=fmt(d.signal_score,1);
@@ -309,7 +363,7 @@ function renderPrediction(d){
   if($("target2")) $("target2").textContent=fmt(d.target_2);
   if($("rr")) $("rr").textContent = Number(d.risk_reward) ? fmt(d.risk_reward,2) : "-";
 
-  if($("predictStatus")) $("predictStatus").textContent="✓ Live prediction updated";
+  if($("predictStatus")) $("predictStatus").textContent=forecastText ? "Model validation is below the safety threshold; forecast withheld." : "✓ Live prediction updated";
   drawChart();
 }
 
@@ -356,12 +410,36 @@ async function modelStatus(){
     if($("modelStatus")) $("modelStatus").textContent="✓ MODEL "+(m.model_version||"-")+" READY";
     if($("modelVersion")) $("modelVersion").textContent="MODEL "+(m.model_version||"-");
     if($("modelState")) $("modelState").textContent="Loaded "+(m.model_version||"-");
+
+    // These four come from the model's own held-out test slice, not from the
+    // live feedback ledger. They used to be filled from /api/model-feedback,
+    // which meant "5M R²" was actually showing a live direction-hit ratio.
+    const m5=(m.metrics||{})["5m"]||{};
+    const md=(m.metrics||{}).direction||{};
+    if($("mae5")) $("mae5").textContent=fmt(m5.MAE,2);
+    if($("rmse5")) $("rmse5").textContent=fmt(m5.RMSE,2);
+    if($("r25")) $("r25").textContent=fmt(m5.R2,4);
+    if($("dirAcc")) $("dirAcc").textContent=pct(md.Accuracy);
+    if($("dirBase")) $("dirBase").textContent=pct(md.Baseline);
+    if($("dirEdge")) $("dirEdge").textContent=
+      md.Edge==null ? "-" : (md.Edge>=0?"+":"")+(md.Edge*100).toFixed(2)+"% ("+fmt(md.EdgeSigmas,1)+" sigma)";
+
+    const v=m.verdict||{};
+    const vd=$("modelVerdict");
+    if(vd){
+      vd.textContent = v.headline || "Retrain to get an edge verdict.";
+      vd.className = "quality "+(v.tradeable ? "ok" : "bad");
+    }
+    if($("verdictReasons")) $("verdictReasons").innerHTML =
+      (v.reasons||[]).map(r=>"• "+r.replace(/</g,"&lt;")).join("<br>");
+
     const fb=await getJSON("/api/model-feedback?t="+Date.now());
     const s=fb.summary||{};
-    if($("mae5")) $("mae5").textContent=fmt(s.mae,4);
-    if($("dirAcc")) $("dirAcc").textContent=(s.direction_accuracy*100).toFixed(1)+"%";
-    if($("rmse5")) $("rmse5").textContent=fmt(s.mape,4);
-    if($("r25")) $("r25").textContent=fmt(s.direction_accuracy,4);
+    // Live feedback is its own thing and is usually empty. It must never be
+    // rendered as a model metric, and an absent accuracy must read as unknown
+    // rather than as 0.0%.
+    if($("fbSamples")) $("fbSamples").textContent=num(s.samples);
+    if($("fbAcc")) $("fbAcc").textContent=s.has_data ? pct(s.direction_accuracy) : "no data yet";
   }catch(e){}
 }
 async function stats(){
@@ -428,12 +506,11 @@ function drawChart(){
   }
   if($("chartMsg"))$("chartMsg").style.display="none";
 
-  const pad={l:62,r:165,t:24,b:62};
   const cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
   const n=dataAll.length;
-  const visible=Math.max(25,Math.min(n,Math.round(n/zoom)));
-  const start=Math.max(0,Math.min(n-visible,Math.round(pan)));
-  const data=dataAll.slice(start,start+visible);
+  const targetVisible = Math.max(24, Math.min(n, Math.round(n / Math.max(1, zoom))));
+  const start = Math.max(0, Math.min(n - targetVisible, Math.round(pan)));
+  const data = dataAll.slice(start, start + targetVisible);
 
   let maxP=Math.max(...data.map(z=>Number(z.high)));
   let minP=Math.min(...data.map(z=>Number(z.low)));
@@ -455,8 +532,7 @@ function drawChart(){
   const extra=(maxP-minP)*0.08||10;
   maxP+=extra;minP-=extra;
 
-  const slots=visible+1;
-  const x=i=>pad.l+(i+0.5)*(cw/slots);
+  const x=i=>pad.l + (i / Math.max(1, data.length - 1)) * cw;
   const y=v=>pad.t+(maxP-v)/(maxP-minP)*ch;
 
   ctx.strokeStyle="#172033";
@@ -469,9 +545,9 @@ function drawChart(){
   }
 
   const axisRange = String(chartRange || "1D").toUpperCase();
-  const step=Math.max(1,Math.floor(visible/8));
+  const step=Math.max(1,Math.floor(data.length/8));
   ctx.fillStyle="#8490a8";ctx.font="10px Arial";
-  for(let i=0;i<visible;i+=step){
+  for(let i=0;i<data.length;i+=step){
     const t=parseTime(data[i]);
     if(t){
       const label = formatAxisLabel(t, axisRange);
@@ -494,6 +570,33 @@ function drawChart(){
     ctx.globalAlpha=.25;ctx.fillRect(xx-3,pad.t+ch-vh,6,vh);ctx.globalAlpha=1;
   });
 
+  // Automatically detected price structures. Coordinates stay anchored to
+  // candle indexes, so zooming and panning never detach lines from candles.
+  const structureOverlays = Array.isArray(chartContext?.overlays) ? chartContext.overlays : [];
+  const overlayColor = role => ({support:"#55d6ff",resistance:"#fbbf24",breakout:"#22c55e",breakdown:"#ef4444",cup:"#c084fc",handle_resistance:"#fbbf24",handle_support:"#55d6ff",handle_stop:"#ff7185",up:"#22c55e",down:"#ef4444"}[role] || "#cbd5e1");
+  const overlayX = idx => x(Number(idx) - start);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(pad.l,pad.t,cw,ch); ctx.clip();
+  structureOverlays.forEach(o => {
+    const pts = Array.isArray(o.points) ? o.points : [];
+    const color = overlayColor(o.role);
+    if(o.kind === "box" && pts.length >= 2){
+      const left=Math.max(pad.l,overlayX(pts[0].index)), right=Math.min(pad.l+cw,overlayX(pts[1].index));
+      const top=y(Math.max(Number(o.y0),Number(o.y1))), bottom=y(Math.min(Number(o.y0),Number(o.y1)));
+      ctx.fillStyle=color+"26"; ctx.strokeStyle=color; ctx.lineWidth=1.2; ctx.setLineDash([4,3]);
+      ctx.fillRect(left,top,Math.max(1,right-left),bottom-top); ctx.strokeRect(left,top,Math.max(1,right-left),bottom-top); ctx.setLineDash([]);
+    } else if((o.kind === "trendline" || o.kind === "horizontal") && pts.length >= 2){
+      ctx.strokeStyle=color; ctx.lineWidth=o.role === "support" || o.role === "resistance" ? 1.8 : 1.4; ctx.setLineDash(o.kind === "horizontal" ? [4,4] : []);
+      ctx.beginPath(); ctx.moveTo(overlayX(pts[0].index),y(Number(pts[0].price))); ctx.lineTo(overlayX(pts[1].index),y(Number(pts[1].price))); ctx.stroke(); ctx.setLineDash([]);
+    } else if(o.kind === "curve" && pts.length >= 2){
+      ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath();
+      pts.forEach((pt,j)=>{ const px=overlayX(pt.index), py=y(Number(pt.price)); if(j===0)ctx.moveTo(px,py); else ctx.lineTo(px,py); }); ctx.stroke();
+    } else if(o.kind === "label" && pts.length){
+      const pt=pts[0], px=overlayX(pt.index), py=y(Number(pt.price));
+      if(px>=pad.l && px<=pad.l+cw){ ctx.fillStyle=color; ctx.font="bold 10px Arial"; ctx.fillText(String(o.text||"PATTERN"),px+5,Math.max(pad.t+12,py-7)); }
+    }
+  });
+  ctx.restore();
   // Historical predictions.
   let started=false;
   ctx.strokeStyle="#4aa3ff";ctx.lineWidth=2.5;ctx.setLineDash([6,4]);ctx.beginPath();
@@ -515,32 +618,34 @@ function drawChart(){
   });
 
   // Current next forecasts.
-  const p5=prediction?.next_5m?.expected_price;
-  const p10=prediction?.next_10m?.expected_price;
+  const forecastVisible = prediction?.model_quality?.trade_signals_enabled !== false && prediction?.next_5m?.available !== false;
+  const p5=forecastVisible ? prediction?.next_5m?.expected_price : null;
+  const p10=forecastVisible ? prediction?.next_10m?.expected_price : null;
   const last=data[data.length-1];
   const lastClose=Number(last.close);
-  const nx=pad.l+(visible+0.5)*(cw/slots);
+  const lastX=x(data.length - 1);
+  const forecastX=Math.min(W - pad.r + 6, lastX + 52);
   const ly=y(lastClose);
   if(Number.isFinite(Number(p5))){
     const py=y(Number(p5));
     ctx.strokeStyle="#4aa3ff";ctx.lineWidth=3;ctx.setLineDash([9,5]);
-    ctx.beginPath();ctx.moveTo(x(visible-1),ly);ctx.lineTo(nx,py);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle="#4aa3ff";ctx.beginPath();ctx.arc(nx,py,6,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.moveTo(lastX,ly);ctx.lineTo(forecastX,py);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle="#4aa3ff";ctx.beginPath();ctx.arc(forecastX,py,6,0,Math.PI*2);ctx.fill();
     const dir=String(prediction.next_5m.direction||"").toUpperCase();
     const pts=Number(prediction.next_5m.expected_points);
     const label="NEXT 5M "+dir+" "+(pts>=0?"+":"")+fmt(pts,1)+" pts";
     ctx.fillStyle="#4aa3ff";ctx.font="bold 11px Arial";
-    ctx.fillText(label,Math.min(nx+8,W-150),Math.max(18,py-10));
+    ctx.fillText(label,Math.min(forecastX+8,W-150),Math.max(18,py-10));
   }
   if(Number.isFinite(Number(p10))){
     const py10=y(Number(p10));
     ctx.strokeStyle="#f59e0b";ctx.lineWidth=2;ctx.setLineDash([3,6]);
-    ctx.beginPath();ctx.moveTo(x(visible-1),ly);ctx.lineTo(nx,py10);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle="#f59e0b";ctx.beginPath();ctx.arc(nx,py10,4.5,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.moveTo(lastX,ly);ctx.lineTo(forecastX,py10);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle="#f59e0b";ctx.beginPath();ctx.arc(forecastX,py10,4.5,0,Math.PI*2);ctx.fill();
     const dir10=String(prediction.next_10m.direction||"").toUpperCase();
     const label10="NEXT 10M "+dir10+" "+(Number(prediction.next_10m.expected_points)>=0?"+":"")+fmt(prediction.next_10m.expected_points,1)+" pts";
     ctx.fillStyle="#f59e0b";ctx.font="bold 10px Arial";
-    ctx.fillText(label10,Math.min(nx+8,W-150),Math.max(34,py10-10));
+    ctx.fillText(label10,Math.min(forecastX+8,W-150),Math.max(34,py10-10));
   }
 
   const signal = String(prediction?.signal || prediction?.trade_call?.bias || "WAIT").toUpperCase();
@@ -548,54 +653,94 @@ function drawChart(){
   const stopVal = Number(prediction?.stop_loss ?? prediction?.trade_call?.stop_loss);
   const target1Val = Number(prediction?.target_1 ?? prediction?.trade_call?.target_1);
   const target2Val = Number(prediction?.target_2 ?? prediction?.trade_call?.target_2);
-  const supportVal=Number(prediction?.support);
-  const resistanceVal=Number(prediction?.resistance);
+  let supportVal=Number(prediction?.support);
+  let resistanceVal=Number(prediction?.resistance);
+  const patternContext = prediction?.pattern_context || {};
 
-  if(signal === "BUY" && Number.isFinite(entryVal) && Number.isFinite(target1Val)){
-    const yEntry = y(entryVal), yTarget = y(target1Val), yStop = Number.isFinite(stopVal) ? y(stopVal) : y(entryVal);
-    ctx.fillStyle = "rgba(34, 197, 94, 0.10)";
-    ctx.fillRect(pad.l, Math.min(yEntry, yTarget), cw, Math.abs(yEntry - yTarget));
-    if(Number.isFinite(stopVal)){
-      ctx.strokeStyle = "rgba(255, 77, 93, 0.45)";
-      ctx.beginPath();ctx.moveTo(pad.l, yStop);ctx.lineTo(pad.l+cw, yStop);ctx.stroke();
-    }
-  }
-  if(signal === "SELL" && Number.isFinite(entryVal) && Number.isFinite(target1Val)){
-    const yEntry = y(entryVal), yTarget = y(target1Val), yStop = Number.isFinite(stopVal) ? y(stopVal) : y(entryVal);
-    ctx.fillStyle = "rgba(239, 68, 68, 0.10)";
-    ctx.fillRect(pad.l, Math.min(yEntry, yTarget), cw, Math.abs(yEntry - yTarget));
-    if(Number.isFinite(stopVal)){
-      ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
-      ctx.beginPath();ctx.moveTo(pad.l, yStop);ctx.lineTo(pad.l+cw, yStop);ctx.stroke();
+  if(!Number.isFinite(supportVal) || !Number.isFinite(resistanceVal)){
+    const recent = data.slice(-20);
+    if(recent.length){
+      supportVal = Math.min(...recent.map(z => Number(z.low)));
+      resistanceVal = Math.max(...recent.map(z => Number(z.high)));
     }
   }
 
-  if(Number.isFinite(supportVal)){
-    const yy=y(supportVal);
-    ctx.strokeStyle="#55d6ff";ctx.lineWidth=1;ctx.setLineDash([2,4]);
-    ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(pad.l+cw,yy);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle="#55d6ff";ctx.font="bold 10px Arial";ctx.fillText("SUP "+fmt(supportVal),pad.l+cw+8,yy+4);
-  }
-  if(Number.isFinite(resistanceVal)){
-    const yy=y(resistanceVal);
-    ctx.strokeStyle="#fbbf24";ctx.lineWidth=1;ctx.setLineDash([2,4]);
-    ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(pad.l+cw,yy);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle="#fbbf24";ctx.font="bold 10px Arial";ctx.fillText("RES "+fmt(resistanceVal),pad.l+cw+8,yy+4);
+  if(patternContext?.support != null) supportVal = Number(patternContext.support);
+  if(patternContext?.resistance != null) resistanceVal = Number(patternContext.resistance);
+
+  const patternLevels = Array.isArray(patternContext?.levels) ? patternContext.levels : [];
+  const trendline = Array.isArray(patternContext?.trendline) ? patternContext.trendline : [];
+  const midpointVal = Number.isFinite(supportVal) && Number.isFinite(resistanceVal) ? (supportVal + resistanceVal) / 2 : NaN;
+
+  const drawHorizontalLevel = (value, color, label, offset = 0, dash = [7,5], font = "bold 10px Arial") => {
+    const v = Number(value);
+    if(!Number.isFinite(v) || v < lo || v > hi || v < minP || v > maxP) return;
+    const yy = y(v);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash(dash);
+    ctx.beginPath();
+    ctx.moveTo(pad.l, yy);
+    ctx.lineTo(pad.l + cw, yy);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = color;
+    ctx.font = font;
+    ctx.fillText(label + " " + fmt(v), pad.l + cw + 8, yy + 4 + offset);
+  };
+
+  if(trendline.length >= 2){
+    const a = trendline[0], b = trendline[trendline.length - 1];
+    const x1 = pad.l + (Number(a.x) / Math.max(1, data.length - 1)) * cw;
+    const x2 = pad.l + (Number(b.x) / Math.max(1, data.length - 1)) * cw;
+    const y1 = y(Number(a.y));
+    const y2 = y(Number(b.y));
+    ctx.strokeStyle = "rgba(96, 165, 250, 0.9)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.setLineDash([]);
   }
 
-  function level(v,color,label,offset=0){
-    v=Number(v);
-    if(!Number.isFinite(v)||v<lo||v>hi||v<minP||v>maxP)return;
-    const yy=y(v);
-    ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.setLineDash([7,5]);
-    ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(pad.l+cw,yy);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle=color;ctx.font="bold 10px Arial";
-    ctx.fillText(label+" "+fmt(v),pad.l+cw+8,yy+4+offset);
+  patternLevels.forEach((level) => {
+    const value = Number(level.value);
+    if(!Number.isFinite(value)) return;
+    const yy = y(value);
+    const color = level.type === "support" ? "#60a5fa" : level.type === "resistance" ? "#fbbf24" : level.type === "breakout" ? "#34d399" : level.type === "breakdown" ? "#ef4444" : "#a78bfa";
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(pad.l, yy);
+    ctx.lineTo(pad.l + cw, yy);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = color;
+    ctx.font = "bold 10px Arial";
+    ctx.fillText(String(level.type).toUpperCase() + " " + fmt(value), pad.l + cw + 8, yy + 4);
+  });
+
+  const tradeBoxColor = signal === "BUY" ? "rgba(34, 197, 94, 0.10)" : signal === "SELL" ? "rgba(239, 68, 68, 0.10)" : "rgba(148, 163, 184, 0.06)";
+  if(Number.isFinite(entryVal) && Number.isFinite(target1Val)){
+    const yEntry = y(entryVal), yTarget = y(target1Val), yStop = Number.isFinite(stopVal) ? y(stopVal) : y(entryVal);
+    ctx.fillStyle = tradeBoxColor;
+    ctx.fillRect(pad.l, Math.min(yEntry, yTarget), cw, Math.abs(yEntry - yTarget));
+    if(Number.isFinite(stopVal)){
+      ctx.strokeStyle = signal === "BUY" ? "rgba(255, 77, 93, 0.45)" : signal === "SELL" ? "rgba(34, 197, 94, 0.45)" : "rgba(148, 163, 184, 0.45)";
+      ctx.beginPath();ctx.moveTo(pad.l, yStop);ctx.lineTo(pad.l+cw, yStop);ctx.stroke();
+    }
   }
-  level(entryVal,"#f5c542","ENTRY",0);
-  level(stopVal,"#ff4d5d","STOP",12);
-  level(target1Val,"#22c55e","T1",0);
-  level(target2Val,"#22c55e","T2",12);
+
+  if(Number.isFinite(supportVal)) drawHorizontalLevel(supportVal, "#55d6ff", "SUP", 0, [2,4]);
+  if(Number.isFinite(resistanceVal)) drawHorizontalLevel(resistanceVal, "#fbbf24", "RES", 12, [2,4]);
+  if(Number.isFinite(midpointVal)) drawHorizontalLevel(midpointVal, "#a78bfa", "MID", 24, [6,5], "bold 9px Arial");
+  drawHorizontalLevel(entryVal, "#f5c542", "ENTRY", 0);
+  drawHorizontalLevel(stopVal, "#ff4d5d", "STOP", 12);
+  drawHorizontalLevel(target1Val, "#22c55e", "T1", 0);
+  drawHorizontalLevel(target2Val, "#22c55e", "T2", 12);
 
   const patternName=String(prediction?.pattern||"NONE").toUpperCase();
   if(patternName && patternName !== "NONE"){
@@ -610,24 +755,33 @@ function drawChart(){
   if(signalText !== "WAIT"){
     const signalColor=signalText==="BUY"?"#22c55e":signalText==="SELL"?"#ef4444":"#f5c542";
     const markerPulse = 0.65 + ((Math.sin(Date.now()/220)+1)/2) * 0.35;
+    const signalX = Math.min(W - pad.r - 70, Math.max(pad.l + 110, lastX + 28));
+    const signalY = pad.t + 40;
+
     ctx.save();
     ctx.globalAlpha = markerPulse;
-    ctx.fillStyle=signalColor;ctx.font="bold 12px Arial";
-    ctx.fillText("SIGNAL "+signalText, pad.l+cw+8, pad.t+40);
-    ctx.fillStyle=signalColor;ctx.beginPath();ctx.arc(nx-10, pad.t+18, 5 + markerPulse * 2, 0, Math.PI*2);ctx.fill();
+    ctx.fillStyle = signalColor;
+    ctx.font = "bold 12px Arial";
+    ctx.fillText("SIGNAL " + signalText, signalX, signalY);
+    ctx.fillStyle = signalColor;
+    ctx.beginPath();
+    ctx.arc(signalX - 12, signalY - 18, 5 + markerPulse * 2, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
 
-    const callText = (prediction?.trade_call?.setup || (signalText === "BUY" ? "LONG SETUP" : "SHORT SETUP")).toUpperCase();
-    ctx.fillStyle=signalColor;ctx.font="bold 11px Arial";
-    ctx.fillText(callText, pad.l+cw+8, pad.t+58);
+    const callText = (prediction?.trade_call?.setup || (signalText === "BUY" ? "LONG SETUP" : signalText === "SELL" ? "SHORT SETUP" : "SETUP")).toUpperCase();
+    ctx.fillStyle = signalColor;
+    ctx.font = "bold 11px Arial";
+    ctx.fillText(callText, signalX, signalY + 20);
   }
 }
 
 async function loadChart(range="1D"){
-  chartRange=range;
-  try{
-    const d=await getJSON("/api/chart-history?range="+encodeURIComponent(range)+"&t="+Date.now());
-    chartData=(d.candles||[]).map((c,i)=>({
+  chartRange = range;
+  try {
+    const d = await getJSON("/api/chart-history?range=" + encodeURIComponent(range) + "&t=" + Date.now());
+    chartContext = d.chart_context || {};
+    chartData = (d.candles || []).map((c, i) => ({
       ...c,
       index: i,
       prediction: Number.isFinite(Number(c.prediction)) ? Number(c.prediction) : undefined,
@@ -635,26 +789,42 @@ async function loadChart(range="1D"){
       predictionConfidence: Number.isFinite(Number(c.predictionConfidence)) ? Number(c.predictionConfidence) : undefined,
       predictedPoints: Number.isFinite(Number(c.predictedPoints)) ? Number(c.predictedPoints) : undefined,
     }));
-    if($("predictionCount"))$("predictionCount").textContent="Historical ML predictions: waiting...";
-    try{
-      const p=await getJSON("/api/chart-predictions?range="+encodeURIComponent(range)+"&t="+Date.now());
-      (p.predictions||[]).forEach(z=>{
-        const i=Number(z.index);
-        if(i>=0 && i<chartData.length){
-          chartData[i].prediction=Number(z.prediction);
-          chartData[i].predictedDirection=z.direction||"";
-          chartData[i].predictionConfidence=Number(z.confidence);
-          chartData[i].predictedPoints=Number(z.expected_points);
+
+    if ($("predictionCount")) $("predictionCount").textContent = "Historical ML predictions: waiting...";
+    const predictionPromise = getJSON("/api/chart-predictions?range=" + encodeURIComponent(range) + "&t=" + Date.now())
+      .then((p) => {
+        if (!Array.isArray(p.predictions)) return;
+        p.predictions.forEach((z) => {
+          const i = Number(z.index);
+          if (i >= 0 && i < chartData.length) {
+            chartData[i].prediction = Number(z.prediction);
+            chartData[i].predictedDirection = z.direction || "";
+            chartData[i].predictionConfidence = Number(z.confidence);
+            chartData[i].predictedPoints = Number(z.expected_points);
+          }
+        });
+        if ("predictionCount" in window && $("predictionCount")) {
+          $("predictionCount").textContent = "Historical ML predictions: " + (p.count || 0) + " points";
+        }
+      })
+      .catch((e) => {
+        if ("predictionCount" in window && $("predictionCount")) {
+          $("predictionCount").textContent = "Historical ML predictions unavailable: " + e.message;
         }
       });
-      if($("predictionCount"))$("predictionCount").textContent="Historical ML predictions: "+(p.count||0)+" points";
-    }catch(e){
-      if($("predictionCount"))$("predictionCount").textContent="Historical ML predictions unavailable: "+e.message;
-    }
+
+    await Promise.race([
+      predictionPromise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Prediction overlay timeout")), 2000))
+    ]).catch(() => {});
+
     drawChart();
-  }catch(e){
-    chartData=[];
-    if($("chartMsg")){$("chartMsg").style.display="block";$("chartMsg").textContent="Chart error: "+e.message;}
+  } catch (e) {
+    chartData = [];
+    if ($("chartMsg")) {
+      $("chartMsg").style.display = "block";
+      $("chartMsg").textContent = "Chart error: " + e.message;
+    }
   }
 }
 
@@ -679,9 +849,24 @@ function bind(){
     canvas.style.cursor="grab";
     canvas.addEventListener("wheel",e=>{
       e.preventDefault();
-      zoom=Math.max(1,Math.min(12,zoom*(e.deltaY<0?1.18:.85)));
+      const cleanLen = chartData.filter(validCandle).length;
+      if (!cleanLen) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = Math.max(pad.l, Math.min(rect.width - pad.r, e.clientX - rect.left));
+      const ratio = (mouseX - pad.l) / Math.max(1, rect.width - pad.l - pad.r);
+      const visibleBefore = Math.max(24, Math.min(cleanLen, Math.round(cleanLen / Math.max(1, zoom))));
+      const candleAtCursor = pan + ratio * visibleBefore;
+
+      const zoomFactor = e.deltaY < 0 ? 0.85 : 1.15;
+      zoom = Math.max(1, Math.min(20, zoom * zoomFactor));
+
+      const visibleAfter = Math.max(24, Math.min(cleanLen, Math.round(cleanLen / Math.max(1, zoom))));
+      pan = candleAtCursor - ratio * visibleAfter;
+      pan = Math.max(0, Math.min(Math.max(0, cleanLen - visibleAfter), pan));
       drawChart();
     },{passive:false});
+
     canvas.addEventListener("mousedown",e=>{
       dragging=true;
       dragX=e.clientX;
@@ -697,12 +882,14 @@ function bind(){
       if(!dragging||!chartData.length)return;
       const cleanLen=chartData.filter(validCandle).length;
       if(!cleanLen) return;
-      const visible=Math.max(25,Math.min(cleanLen,Math.round(cleanLen/zoom)));
-      const maxPan=Math.max(0, cleanLen-visible);
-      const deltaX=e.clientX-dragX;
-      const deltaCandles = (deltaX / Math.max(1, canvas.clientWidth)) * visible * 1.2;
-      pan = dragStartPan + deltaCandles;
-      pan=Math.max(0,Math.min(maxPan,pan));
+      const targetVisible = Math.max(24, Math.min(cleanLen, Math.round(cleanLen / Math.max(1, zoom))));
+      const maxPan = Math.max(0, cleanLen - targetVisible);
+      const deltaX = e.clientX - dragX;
+      const deltaCandles = (deltaX / Math.max(1, canvas.clientWidth)) * targetVisible;
+      pan = dragStartPan - deltaCandles;
+      pan = Math.max(0, Math.min(maxPan, pan));
+      dragX = e.clientX;
+      dragStartPan = pan;
       drawChart();
     });
     canvas.addEventListener("dblclick",fit);
@@ -721,14 +908,14 @@ async function boot(){
   await modelStatus();
   await stats();
   await loadChart("1D");
-  await predictNow();
+  predictNow().catch(()=>{});
 }
 boot();
 scheduleLiveRefresh();
 setInterval(poll,1000);
 setInterval(updateLiveClock,1000);
-setInterval(tokenStatus,5000);
-setInterval(modelStatus,10000);
+setInterval(tokenStatus,60000);
+setInterval(modelStatus,120000);
 </script>
 
 </body>

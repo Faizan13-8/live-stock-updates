@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from urllib.parse import quote
+import time
 import requests
 
 from config import (
@@ -7,6 +8,27 @@ from config import (
     REQUEST_TIMEOUT
 )
 from database import upsert_candles
+
+_CACHE_TTL_SECONDS = 60
+_CACHE = {}
+
+
+def _cache_key(prefix, *parts):
+    return prefix + "::" + "::".join(str(p) for p in parts)
+
+
+def _read_cache(key):
+    entry = _CACHE.get(key)
+    if not entry:
+        return None
+    if time.time() - entry["ts"] > _CACHE_TTL_SECONDS:
+        _CACHE.pop(key, None)
+        return None
+    return entry["value"]
+
+
+def _write_cache(key, value):
+    _CACHE[key] = {"ts": time.time(), "value": value}
 
 def _headers(token):
     return {
@@ -52,17 +74,31 @@ def test_connection(token):
     return True
 
 def fetch_intraday(token):
+    cache_key = _cache_key("intraday", token)
+    cached = _read_cache(cache_key)
+    if cached is not None:
+        return cached
     key = quote(INSTRUMENT_KEY, safe="")
     url = f"{API_BASE}/historical-candle/intraday/{key}/{CANDLE_UNIT}/{CANDLE_INTERVAL}"
-    return _parse(_get(url, token))
+    rows = _parse(_get(url, token))
+    _write_cache(cache_key, rows)
+    return rows
+
 
 def fetch_historical(token, from_date, to_date):
+    cache_key = _cache_key("historical", token, from_date.isoformat(), to_date.isoformat())
+    cached = _read_cache(cache_key)
+    if cached is not None:
+        return cached
     key = quote(INSTRUMENT_KEY, safe="")
     url = (
         f"{API_BASE}/historical-candle/{key}/{CANDLE_UNIT}/"
         f"{CANDLE_INTERVAL}/{to_date:%Y-%m-%d}/{from_date:%Y-%m-%d}"
     )
-    return _parse(_get(url, token))
+    rows = _parse(_get(url, token))
+    _write_cache(cache_key, rows)
+    return rows
+
 
 def fetch_range(token, days):
     """

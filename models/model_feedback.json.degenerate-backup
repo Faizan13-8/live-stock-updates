@@ -1,0 +1,1130 @@
+[
+  {
+    "timestamp": "2026-08-29T14:33:24",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T14:34:24",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T14:34:24",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:16:06",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:16:31",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:17:12",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:17:44",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:18:04",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:19:10",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:20:01",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:20:07",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:20:07",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:20:33",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:21:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:22:24",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:23:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:24:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:25:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:26:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:27:24",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:28:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:29:24",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:30:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:33:18",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:35:19",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:35:46",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:36:16",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:36:46",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:37:16",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:37:33",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:38:00",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:38:30",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:39:00",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:39:29",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:39:59",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:40:30",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:41:24",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:42:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:43:26",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:44:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:45:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:46:24",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:47:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:48:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:49:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:56:28",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:58:12",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:58:30",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:58:56",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:59:26",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T15:59:56",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:00:26",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:00:58",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:01:27",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:01:57",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:02:27",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:02:57",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:03:27",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:03:56",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:04:26",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:04:57",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:05:26",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:05:57",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:06:19",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:06:26",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:06:45",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:06:56",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:07:15",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:07:27",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:07:45",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:07:57",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:08:14",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:08:26",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:08:44",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:08:56",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:09:14",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:09:26",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:09:57",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:10:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:10:28",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:11:14",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:11:24",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:11:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:11:48",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:12:18",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:12:24",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:12:48",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:13:18",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:13:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:13:48",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:14:18",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:14:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:14:48",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:15:19",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:15:28",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:15:49",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:16:06",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:16:31",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:16:37",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:17:04",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:17:37",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:18:10",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:18:18",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:18:39",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:18:46",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:19:09",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:19:38",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:20:08",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:20:38",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:21:08",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:21:38",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:22:08",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:22:21",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:22:44",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:23:14",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:23:43",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:24:13",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:24:43",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:25:14",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:25:43",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:26:13",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:26:43",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:27:13",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:27:44",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:28:13",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:28:43",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:29:13",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:29:43",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:30:13",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:31:26",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:36:25",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:40:36",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:45:32",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:50:31",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T16:55:31",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T17:00:31",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T17:05:31",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T17:10:30",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T17:16:24",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T17:21:24",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  },
+  {
+    "timestamp": "2026-08-29T17:22:51",
+    "predicted_direction": "FLAT",
+    "expected_points": -84.76,
+    "actual_points": 0.0,
+    "actual_direction": "FLAT",
+    "model_version": "V5.1"
+  }
+]

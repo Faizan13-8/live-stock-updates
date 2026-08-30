@@ -1,52 +1,52 @@
 {
   "DOJI": {
-    "count": 1223,
-    "hit_rate": 0.2706459525756337,
+    "count": 3578,
+    "hit_rate": 0.2638345444382337,
     "implied_direction": 1
   },
   "HAMMER": {
-    "count": 116,
-    "hit_rate": 0.35344827586206895,
+    "count": 671,
+    "hit_rate": 0.3472429210134128,
     "implied_direction": 2
   },
   "SHOOTING_STAR": {
-    "count": 93,
-    "hit_rate": 0.3655913978494624,
+    "count": 587,
+    "hit_rate": 0.30664395229982966,
     "implied_direction": 0
   },
   "BULLISH_ENGULFING": {
-    "count": 625,
-    "hit_rate": 0.3488,
+    "count": 2206,
+    "hit_rate": 0.3612873980054397,
     "implied_direction": 2
   },
   "BEARISH_ENGULFING": {
-    "count": 598,
-    "hit_rate": 0.32441471571906355,
+    "count": 1972,
+    "hit_rate": 0.3422920892494929,
     "implied_direction": 0
   },
   "INSIDE_BAR": {
-    "count": 4490,
-    "hit_rate": 0.28351893095768377,
+    "count": 4650,
+    "hit_rate": 0.25849462365591397,
     "implied_direction": 1
   },
   "BREAKOUT_UP": {
-    "count": 105,
-    "hit_rate": 0.3238095238095238,
+    "count": 2415,
+    "hit_rate": 0.37142857142857144,
     "implied_direction": 2
   },
   "BREAKOUT_DOWN": {
-    "count": 104,
-    "hit_rate": 0.3557692307692308,
+    "count": 2039,
+    "hit_rate": 0.3653751839136832,
     "implied_direction": 0
   },
   "HIGHER_HIGH_LOWER_LOW": {
-    "count": 15255,
-    "hit_rate": 0.3518846279908227,
+    "count": 9119,
+    "hit_rate": 0.3548634718719158,
     "implied_direction": 2
   },
   "LOWER_HIGH_LOWER_LOW": {
-    "count": 14365,
-    "hit_rate": 0.3477897667942917,
+    "count": 8712,
+    "hit_rate": 0.35663452708907256,
     "implied_direction": 0
   }
 }

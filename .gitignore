@@ -1,4 +1,9 @@
-venv/ 
-.venv/ 
-__pycache__/ 
-*.pyc 
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Never commit credentials or local market data.
+data/
+!data/.gitkeep

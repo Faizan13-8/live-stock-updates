@@ -46,9 +46,16 @@ def get_stats():
     return {"count": int(row[0] or 0), "first": row[1], "last": row[2]}
 
 def load_candles(limit=6000):
+    """Return the most recent candles in chronological order.
+
+    A chart must never silently start at the oldest rows in the database: that
+    makes a current-market chart and its price labels appear wrong.
+    """
     init_db()
     with sqlite3.connect(DB_PATH) as con:
         return con.execute("""
-            SELECT timestamp,open,high,low,close,volume,open_interest
-            FROM nifty_5min ORDER BY timestamp ASC LIMIT ?
+            SELECT timestamp,open,high,low,close,volume,open_interest FROM (
+                SELECT timestamp,open,high,low,close,volume,open_interest
+                FROM nifty_5min ORDER BY timestamp DESC LIMIT ?
+            ) ORDER BY timestamp ASC
         """, (int(limit),)).fetchall()
